@@ -3,11 +3,11 @@
 # Packages
 import pandas as pd
 
-# Mode
-mode = 'SRR'
+# Config file
+configfile: "config.yaml"
 
-# Metadata
-metadata_file = 'test.metadata.txt'
+# Read metadata
+metadata_file = config["metadata"]
 metadata = pd.read_table(metadata_file, encoding = 'ISO-8859-1')
 
 # Get SRR and GSEs
@@ -19,28 +19,41 @@ GSE_PE = metadata.loc[metadata['LibraryLayout'] == 'PAIRED']['GSE']
 
 rule all:
     input:
+        expand('data/{SRR_SE}/{SRR_SE}.fastq.gz', SRR_SE = SRR_SE),
+        expand('data/{SRR_PE}/{SRR_PE}_1.fastq.gz', SRR_PE = SRR_PE),
         expand('analysis/variants/{SRR}/{SRR}.vcf', SRR = SRR)
 
-# Download and estimate expression
-rule download:
+# Function for matching metadata to current sample
+def get_metadata(sample, column):
+    result = metadata.loc[metadata["SRR"] == sample][column].values
+    return result
+
+rule download_PE:
     output:
-        expand('data/fastq_se/{SRR}/{SRR}.fastq.gz',
-               SRR = SRR_SE),
-        expand('data/fastq_pe/{SRR}/{SRR}_1.fastq.gz',
-               SRR = SRR_PE),
-        expand('analysis/expression/{SRR}/{SRR}.abundance.tsv',
-               SRR = SRR)
+        'data/{SRR_PE}/{SRR_PE}_1.fastq.gz',
+        'analysis/expression/{SRR_PE}/{SRR_PE}.abundance.tsv'
+    params:
+        layout = lambda wildcards: get_metadata(wildcards.SRR_PE,
+                                                "LibraryLayout")
     shell:
-        "touch {output}"
-        # "scripts/01_download_fastq.sh {wildcards.sample} SINGLE"
+        "bash testscript.sh {wildcards.SRR_PE} {params.layout}"
+    
+# Download and estimate expression
+rule download_SE:
+    output:
+        'data/{SRR_SE}/{SRR_SE}.fastq.gz',
+        'analysis/expression/{SRR_SE}/{SRR_SE}.abundance.tsv'
+    params:
+        layout = lambda wildcards: get_metadata(wildcards.SRR_SE,
+                                                "LibraryLayout")
+    shell:
+        "bash testscript.sh {wildcards.SRR_SE} {params.layout}"
 
 # Alignment
 rule align:
     input:
-        expand('data/fastq_se/{SRR}/{SRR}.fastq.gz',
-               SRR = SRR_SE),
-        expand('data/fastq_pe/{SRR}/{SRR}_1.fastq.gz',
-               SRR = SRR_PE)
+        expand('data/{SRR}/{SRR}.fastq.gz', SRR = SRR_SE),
+        expand('data/{SRR}/{SRR}_1.fastq.gz', SRR = SRR_PE)
     output:
         expand('analysis/alignment/{SRR}/{SRR}.bam', SRR = SRR)
     shell:
