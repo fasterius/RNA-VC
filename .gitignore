@@ -1,1 +1,4 @@
 *.un~
+.snakemake
+data
+analysis
