@@ -17,53 +17,57 @@ SRR_PE = metadata.loc[metadata['LibraryLayout'] == 'PAIRED']['SRR']
 GSE_SE = metadata.loc[metadata['LibraryLayout'] == 'SINGLE']['GSE']
 GSE_PE = metadata.loc[metadata['LibraryLayout'] == 'PAIRED']['GSE']
 
-rule all:
-    input:
-        expand('data/{SRR_SE}/{SRR_SE}.fastq.gz', SRR_SE = SRR_SE),
-        expand('data/{SRR_PE}/{SRR_PE}_1.fastq.gz', SRR_PE = SRR_PE),
-        expand('analysis/variants/{SRR}/{SRR}.vcf', SRR = SRR)
-
 # Function for matching metadata to current sample
 def get_metadata(sample, column):
     result = metadata.loc[metadata["SRR"] == sample][column].values
     return result
 
+# Rules
+
+# Rule: create all outputs
+rule all:
+    input:
+        expand('data/fastq/{SRR_SE}/{SRR_SE}.fastq.gz', SRR_SE = SRR_SE),
+        expand('data/fastq/{SRR_PE}/{SRR_PE}_1.fastq.gz', SRR_PE = SRR_PE),
+        expand('results/{SRR}.vcf', SRR = SRR)
+
+# Rule: download and estimate expression on paired-end data
 rule download_PE:
     output:
-        'data/{SRR_PE}/{SRR_PE}_1.fastq.gz',
-        'analysis/expression/{SRR_PE}/{SRR_PE}.abundance.tsv'
+        'data/fastq/{SRR_PE}/{SRR_PE}_1.fastq.gz',
+        'data/expression/{SRR_PE}/{SRR_PE}.abundance.tsv'
     params:
         layout = lambda wildcards: get_metadata(wildcards.SRR_PE,
                                                 "LibraryLayout")
     shell:
         "bash testscript.sh {wildcards.SRR_PE} {params.layout}"
     
-# Download and estimate expression
+# Rule: download and estimate expression on single-end data
 rule download_SE:
     output:
-        'data/{SRR_SE}/{SRR_SE}.fastq.gz',
-        'analysis/expression/{SRR_SE}/{SRR_SE}.abundance.tsv'
+        'data/fastq/{SRR_SE}/{SRR_SE}.fastq.gz',
+        'data/expression/{SRR_SE}/{SRR_SE}.abundance.tsv'
     params:
         layout = lambda wildcards: get_metadata(wildcards.SRR_SE,
                                                 "LibraryLayout")
     shell:
         "bash testscript.sh {wildcards.SRR_SE} {params.layout}"
 
-# Alignment
+# Rule: alignment
 rule align:
     input:
-        expand('data/{SRR}/{SRR}.fastq.gz', SRR = SRR_SE),
-        expand('data/{SRR}/{SRR}_1.fastq.gz', SRR = SRR_PE)
+        expand('data/fastq/{SRR}/{SRR}.fastq.gz', SRR = SRR_SE),
+        expand('data/fastq/{SRR}/{SRR}_1.fastq.gz', SRR = SRR_PE)
     output:
-        expand('analysis/alignment/{SRR}/{SRR}.bam', SRR = SRR)
+        expand('data/alignment/{SRR}/{SRR}.bam', SRR = SRR)
     shell:
         'touch {output}'
 
-# Variant calling
+# Rule: variant calling
 rule variant_calling:
     input:
-        expand('analysis/alignment/{SRR}/{SRR}.bam', SRR = SRR)
+        expand('data/alignment/{SRR}/{SRR}.bam', SRR = SRR)
     output:
-        expand('analysis/variants/{SRR}/{SRR}.vcf', SRR = SRR)
+        expand('results/{SRR}.vcf', SRR = SRR)
     shell:
         'touch {output}'
