@@ -1,14 +1,16 @@
 #!/bin/bash -l
 
 # Get info from Snakemake
-INFO=$1
-SRR=$(echo $INFO | cut -d '/' -f 3)
+SRR=$1
+LAYOUT=$2
+GROUP=$3
+GEN_REF=$4
+STAR_REF=$5
 
-# Get layout from input file name
-LAYOUT=$(echo $INFO | cut -d '/' -f 2)
-if [ "$LAYOUT" == "fastq_pe" ]; then
+# Read layout
+if [ "$LAYOUT" == "PAIRED" ]; then
     FASTQTYPE="_1.fastq.gz"
-elif [ "$LAYOUT" == "fastq_se" ]; then
+elif [ "$LAYOUT" == "SINGLE" ]; then
     FASTQTYPE=".fastq.gz"
 else
     echo "Invalid read layout $LAYOUT; aborting."
@@ -16,16 +18,17 @@ else
 fi
 
 # Directories
-# FASTQDIR=data/$SRR/$SRR/00_fastq
-WORKDIR=analysis/alignment/$SRR
-mkdir -p $WORKDIR/junctions
+FASTQDIR=data/fastq/$SRR
+WORKDIR=data/alignment/$SRR
+JUNCTIONS=data/alignment/junctions/$GROUP
+mkdir -p $JUNCTIONS
 
 # Load modules
 module load bioinfo-tools star/2.5.3a samtools/1.5
 
 # Set paths
-REF_STAR=/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/STARIndex/
-REF=/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/WholeGenomeFasta/genome.fa
+# REF_STAR=/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/STARIndex/
+# REF=/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/WholeGenomeFasta/genome.fa
 
 # First pass (individually)
 for FASTQ in $FASTQDIR/*$FASTQTYPE
@@ -50,7 +53,7 @@ do
         --outFileNamePrefix $WORKDIR/pass1/
 
     # Move junctions
-    mv $WORKDIR/pass1/SJ.out.tab $WORKDIR/junctions/junctions.$REPLICATE.tab
+    mv $WORKDIR/pass1/SJ.out.tab $JUNCTIONS/junctions.$REPLICATE.tab
 
     # Log file
     cat $WORKDIR/pass1/Log.out > $WORKDIR/log.alignment.$REPLICATE.txt
