@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 # Get input parameters
-SRR=$1
+SAMPLE=$1
 LAYOUT=$2
 REF=$3
 CACHEDIR=$4
@@ -22,8 +22,8 @@ fi
 module load bioinfo-tools sratools/2.8.0 kallisto/0.43.1
 
 # Working directory
-FASTQDIR=data/fastq/$SRR
-EXPRDIR=data/expression/$SRR
+FASTQDIR=data/fastq/$SAMPLE
+EXPRDIR=data/expression/$SAMPLE
 
 # Download FASTQ files
 fastq-dump \
@@ -32,36 +32,39 @@ fastq-dump \
     --skip-technical \
     --readids \
     --clip \
-    -v $SRR \
+    -v $SAMPLE \
     "$SPLIT" \
-        > $FASTQDIR/log.download_fastq.${SRR}.txt 2>&1
+        > $FASTQDIR/log.download_fastq.${SAMPLE}.txt 2>&1
+
+# Rename single-end files
+if [ "$LAYOUT" == "SINGLE" ]; then
+    mv $FASTQDIR/${SAMPLE}.fastq.gz $FASTQDIR/${SAMPLE}_0_fastq.gz
+fi
 
 # Delete SRA file (if existing)
-if [ -f $CACHEDIR/${SRR}.sra ]; then
-    rm $CACHEDIR/${SRR}.sra
+if [ -f $CACHEDIR/${SAMPLE}.sra ]; then
+    rm $CACHEDIR/${SAMPLE}.sra
 fi
 
 # Delete SRA cache file (if existing)
-if [ -f $CACHEDIR/${SRR}.sra.cache ]; then
-    rm $CACHEDIR/${SRR}.sra.cache
+if [ -f $CACHEDIR/${SAMPLE}.sra.cache ]; then
+    rm $CACHEDIR/${SAMPLE}.sra.cache
 fi
 
 # Estimate transcript expression with Kallisto
-for FASTQ in $FASTQDIR/*$FASTQTYPE
-do
-    # Set variable input files for PE/SE reads
-        if [ "$LAYOUT" == "PAIRED" ]; then
-            FASTQ2=${FASTQ/_1.fastq.gz/_2.fastq.gz}
-        else
-            FASTQ2=""
-        fi
+if [ "$LAYOUT" == "PAIRED" ]; then
+        FASTQ1=$FASTQDIR/${SAMPLE}_1.fastq.gz
+        FASTQ2=${FASTQ1/_1.fastq.gz/_2.fastq.gz}
+    else
+        FASTQ1=$FASTQDIR/${SAMPLE}_0.fastq.gz
+        FASTQ2=""
+fi
 
-    # Run Kallisto
-    kallisto quant \
-        -i $REF \
-        -t 1 \
-        -b 0 \
-        -o $EXPRDIR \
-        $FASTQ $FASTQ2 \
-            > $EXPRDIR/log.kallisto.${SRR}.txt 2>&1
-done
+# Run Kallisto
+kallisto quant \
+    -i $REF \
+    -t 1 \
+    -b 0 \
+    -o $EXPRDIR \
+    $FASTQ1 $FASTQ2 \
+        > $EXPRDIR/log.kallisto.${SAMPLE}.txt 2>&1
