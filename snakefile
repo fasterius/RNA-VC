@@ -109,8 +109,8 @@ rule align_PE:
 # Rule: variant calling
 rule variant_calling:
     input:
-        expand('data/alignment/{sample}/{sample}.bam', sample = SAMPLES)
+        'data/alignment/{sample}/{sample}.bam'
     output:
-        expand('results/{sample}.vcf', sample = SAMPLES)
+        'results/{sample}.vcf'
     shell:
         'touch {output}'
