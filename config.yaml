@@ -1,7 +1,16 @@
+# Metadata
 metadata: "test.metadata.txt"
 sample_col: "SRR"
 group_col: "GSE"
 layout_col: "LibraryLayout"
+
+# Software and references
 GEN_REF: "/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/WholeGenomeFasta/genome.fa"
 STAR_REF: "/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/STARIndex/"
 SRA_CACHE: "/proj/b2014056/ncbi/sra/"
+PICARD: "/sw/apps/bioinfo/picard/2.0.1/milou/"
+GATK: "/sw/apps/bioinfo/GATK/3.7/"
+SNPEFF: "/sw/apps/bioinfo/snpEff/4.2/milou/"
+KNOWNSNPS: "/sw/data/uppnex/reference/biodata/GATK/ftp.broadinstitute.org/bundle/hg38bundle/dbsnp_144.hg38.vcf.gz"
+KNOWNINDELS: "/sw/data/uppnex/reference/biodata/GATK/ftp.broadinstitute.org/bundle/hg38bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+SNPEFFASSEMBLY: "GRCh38.82"
