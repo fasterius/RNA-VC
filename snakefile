@@ -10,7 +10,7 @@ configfile: "config.yaml"
 metadata_file = config["metadata"]
 metadata = pd.read_table(metadata_file, encoding = 'ISO-8859-1')
 
-# Get relevant column names
+# Get relevant column names from config
 sample_col = config["sample_col"]
 group_col = config["group_col"]
 layout_col = config["layout_col"]
@@ -47,8 +47,11 @@ rule download_SE:
         layout = lambda wildcards:
             get_metadata(wildcards.sample_SE, layout_col)
     shell:
-        "touch {output} data/{params.layout}"
-        # "echo {wildcards.sample_SE} {params.layout} > {output}"
+        "touch {output}"
+        # """
+        # bash scripts/01_download_fastq.sh {wildcards.sample_SE} \
+            # {params.layout} {config[GEN_REF]} {config[SRA_CACHE]}
+        # """
 
 # Rule: download and estimate expression on paired-end data
 rule download_PE:
@@ -56,23 +59,52 @@ rule download_PE:
         'data/fastq/{sample_PE}/{sample_PE}_1.fastq.gz',
         'data/expression/{sample_PE}/{sample_PE}.abundance.tsv'
     params:
-        layout = lambda wildcards: get_metadata(wildcards.sample_PE,
-                                                "LibraryLayout")
+        layout = lambda wildcards:
+            get_metadata(wildcards.sample_PE, layout_col)
     shell:
         "touch {output}"
-        # "echo {wildcards.sample_PE} {params.layout} > {output}"
+        # """
+        # bash scripts/01_download_fastq.sh {wildcards.sample_PE} \
+            # {params.layout} {config[GEN_REF]} {config[SRA_CACHE]}
+        # """
 
-# Rule: alignment
-rule align:
+# Rule: single-end alignment
+rule align_SE:
     input:
-        expand('data/fastq/{sample_SE}/{sample_SE}.fastq.gz',
-            sample_SE = SAMPLES_SE),
-        expand('data/fastq/{sample_PE}/{sample_PE}_1.fastq.gz',
-            sample_PE = SAMPLES_PE)
+        'data/fastq/{sample_SE}/{sample_SE}(?!_1).fastq.gz'
     output:
-        expand('data/alignment/{sample}/{sample}.bam', sample = SAMPLES)
+        'data/alignment/{sample_SE}/{sample_SE}.bam'
+    params:
+        layout = lambda wildcards:
+            get_metadata(wildcards.sample_SE, layout_col),
+        group = lambda wildcards:
+            get_metadata(wildcards.sample_SE, group_col)
     shell:
         'touch {output}'
+        # """
+        # bash scripts/02_alignment.sh {wildcards.sample_SE} \
+            # {params.layout} {params.group} \
+            # {config[GEN_REF]} {config[STAR_REF]}
+        # """
+
+# Rule: paired-end alignment
+rule align_PE:
+    input:
+        'data/fastq/{sample_PE}/{sample_PE}_1.fastq.gz'
+    output:
+        'data/alignment/{sample_PE}/{sample_PE}.bam'
+    params:
+        layout = lambda wildcards:
+            get_metadata(wildcards.sample_PE, layout_col),
+        group = lambda wildcards:
+            get_metadata(wildcards.sample_PE, group_col)
+    shell:
+        'touch {output}'
+        # """
+        # bash scripts/02_alignment.sh {wildcards.sample_PE} \
+            # {params.layout} {params.group} \
+            # {config[GEN_REF]} {config[STAR_REF]}
+        # """
 
 # Rule: variant calling
 rule variant_calling:
