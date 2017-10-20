@@ -1,7 +1,8 @@
 # Metadata
 metadata: "test.metadata.txt"
+study_col: "GSE"
+group_col: "group"
 sample_col: "SRR"
-group_col: "GSE"
 layout_col: "LibraryLayout"
 
 # Software and references
