@@ -1,15 +1,16 @@
 #!/bin/bash -l
 
-# Get info from Snakemake
-INFO=$1
-SRR=$(echo $INFO | cut -f '/' -f 3)
+# Get input parameters
+SRR=$1
+LAYOUT=$2
+REF=$3
+CACHEDIR=$4
 
 # Get layout from input file name
-LAYOUT=$(echo $INFO | cut -d '/' -f 2)
-if [ "$LAYOUT" == "fastq_pe" ]; then
+if [ "$LAYOUT" == "PAIRED" ]; then
     SPLIT="--split-files"
     FASTQTYPE="_1.fastq.gz"
-elif [ "$LAYOUT" == "fastq_se" ]; then
+elif [ "$LAYOUT" == "SINGLE" ]; then
     SPLIT=""
     FASTQTYPE=".fastq.gz"
 else
@@ -21,32 +22,32 @@ fi
 module load bioinfo-tools sratools/2.8.0 kallisto/0.43.1
 
 # Working directory
-DATADIR=data/fastq/$SRR
-WORKDIR=analysis/expression/$SRR
+FASTQDIR=data/fastq/$SRR
+EXPRDIR=data/expression/$SRR
 
 # Download FASTQ files
 fastq-dump \
-    --outdir $DATADIR \
+    --outdir $FASTQDIR \
     --gzip \
     --skip-technical \
     --readids \
     --clip \
     -v $SRR \
     "$SPLIT" \
-        > $DATADIR/log.download_fastq.${SRR}.txt 2>&1
+        > $FASTQDIR/log.download_fastq.${SRR}.txt 2>&1
 
 # Delete SRA file (if existing)
-if [ -f /proj/b2014056/ncbi/sra/${SRR}.sra ]; then
-    rm /proj/b2014056/ncbi/sra/${SRR}.sra
+if [ -f $CACHEDIR/${SRR}.sra ]; then
+    rm $CACHEDIR/${SRR}.sra
 fi
 
 # Delete SRA cache file (if existing)
-if [ -f /proj/b2014056/ncbi/sra/${SRR}.sra.cache ]; then
-    rm /proj/b2014056/ncbi/sra/${SRR}.sra.cache
+if [ -f $CACHEDIR/${SRR}.sra.cache ]; then
+    rm $CACHEDIR/${SRR}.sra.cache
 fi
 
 # Estimate transcript expression with Kallisto
-for FASTQ in $DATADIR/*$FASTQTYPE
+for FASTQ in $FASTQDIR/*$FASTQTYPE
 do
     # Set variable input files for PE/SE reads
         if [ "$LAYOUT" == "PAIRED" ]; then
@@ -60,7 +61,7 @@ do
         -i $REF \
         -t 1 \
         -b 0 \
-        -o $WORKDIR \
+        -o $EXPRDIR \
         $FASTQ $FASTQ2 \
-            > $WORKDIR/log.kallisto.${SRR}.txt 2>&1
+            > $EXPRDIR/log.kallisto.${SRR}.txt 2>&1
 done
