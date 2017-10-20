@@ -1,1 +1,7 @@
 metadata: "test.metadata.txt"
+sample_col: "SRR"
+group_col: "GSE"
+layout_col: "LibraryLayout"
+GEN_REF: "/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/WholeGenomeFasta/genome.fa"
+STAR_REF: "/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/STARIndex/"
+SRA_CACHE: "/proj/b2014056/ncbi/sra/"
