@@ -58,7 +58,7 @@ def get_metadata(sample, column):
 
 # Strings for base directories
 base = 'data/{study}/{group}/'
-tmp = '.tmp/' + base
+tmp = '.snake_tmp/' + base
 
 # Rule: final outputs
 rule all:
@@ -67,11 +67,13 @@ rule all:
             study = STUDIES, group = GROUPS, sample = SAMPLES),
         expand(base + 'variants/{sample}.vcf', zip,
             study = STUDIES, group = GROUPS, sample = SAMPLES)
+    shell:
+        'rm -rf .snake_tmp'
 
 # Rule: clean
 rule clean:
     shell:
-        'rm -r data .tmp'
+        'rm -rf data .snake_tmp'
 
 # Rule: download and estimate expression on single-end data
 rule download:
@@ -199,7 +201,7 @@ rule fastq_cleanup:
         """
         mv {input.expression} {output.expression}
         mv {input.alignment} {output.alignment}
-        FASTQDIR=".tmp/data/{wildcards.study}/{wildcards.group}/"
+        FASTQDIR=".snake_tmp/data/{wildcards.study}/{wildcards.group}/"
         FASTQDIR+="fastq/{wildcards.sample}"
         rm -r $FASTQDIR
         """
@@ -241,7 +243,7 @@ rule alignment_cleanup:
     shell:
         """
         mv {input} {output}
-        BAMFILE=".tmp/data/{wildcards.study}/{wildcards.group}/"
+        BAMFILE=".snake_tmp/data/{wildcards.study}/{wildcards.group}/"
         BAMFILE+="alignment/{wildcards.sample}.bam"
         rm $BAMFILE
         """
