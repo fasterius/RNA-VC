@@ -9,7 +9,7 @@ STAR_REF=$5
 
 # Directories
 FASTQDIR=data/fastq/$SAMPLE
-WORKDIR=datga/alignment/$SAMPLE
+WORKDIR=data/alignment/$SAMPLE
 JUNCDIR=data/alignment/junctions/$GROUP
 
 # Get read layout and FASTQ input files

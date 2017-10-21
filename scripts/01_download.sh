@@ -19,7 +19,7 @@ else
 fi
 
 # Load modules
-module load bioinfo-tools sratools/2.8.0 kallisto/0.43.1
+module load bioinfo-tools sratools/2.8.0
 
 # Working directory
 FASTQDIR=data/fastq/$SAMPLE
@@ -33,13 +33,7 @@ fastq-dump \
     --readids \
     --clip \
     -v $SAMPLE \
-    "$SPLIT" \
-        > $FASTQDIR/log.download_fastq.${SAMPLE}.txt 2>&1
-
-# Rename single-end files
-if [ "$LAYOUT" == "SINGLE" ]; then
-    mv $FASTQDIR/${SAMPLE}.fastq.gz $FASTQDIR/${SAMPLE}_0_fastq.gz
-fi
+    "$SPLIT"
 
 # Delete SRA file (if existing)
 if [ -f $CACHEDIR/${SAMPLE}.sra ]; then
@@ -50,21 +44,3 @@ fi
 if [ -f $CACHEDIR/${SAMPLE}.sra.cache ]; then
     rm $CACHEDIR/${SAMPLE}.sra.cache
 fi
-
-# Estimate transcript expression with Kallisto
-if [ "$LAYOUT" == "PAIRED" ]; then
-        FASTQ1=$FASTQDIR/${SAMPLE}_1.fastq.gz
-        FASTQ2=${FASTQ1/_1.fastq.gz/_2.fastq.gz}
-    else
-        FASTQ1=$FASTQDIR/${SAMPLE}_0.fastq.gz
-        FASTQ2=""
-fi
-
-# Run Kallisto
-kallisto quant \
-    -i $REF \
-    -t 1 \
-    -b 0 \
-    -o $EXPRDIR \
-    $FASTQ1 $FASTQ2 \
-        > $EXPRDIR/log.kallisto.${SAMPLE}.txt 2>&1
