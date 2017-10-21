@@ -83,9 +83,7 @@ rule download:
         expand(tmp + 'fastq/{sample}_1.fastq.gz', zip,
             study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE),
         expand(tmp + 'fastq/{sample}_2.fastq.gz', zip,
-            study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE),
-        expand(base + 'expression/{sample}.abundance.tsv', zip,
-            study = STUDIES, group = GROUPS, sample = SAMPLES)
+            study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
     log:
         expand(base + 'logs/download.{sample}.log', zip,
             study = STUDIES, group = GROUPS, sample = SAMPLES)
@@ -97,6 +95,22 @@ rule download:
         # bash scripts/01_download_fastq.sh {wildcards.sample} \
             # {params.layout} {config[GEN_REF]} {config[SRA_CACHE]}
         # """
+
+# Rule: expression estimation
+rule expression:
+    input:
+        rules.download.output
+    output:
+        base + 'expression/{sample}.abundance.tsv'
+        # expand(base + 'expression/{sample}.abundance.tsv', zip,
+            # study = STUDIES, group = GROUPS, sample = SAMPLES)
+    params:
+        layout = lambda wildcards:
+            get_metadata(wildcards.sample, layout_col),
+    log:
+        base + 'logs/expression.{sample}.log'
+    shell:
+        'touch {output} 2> {log}'
 
 # Rule: first-pass alignment
 rule align_pass1:
