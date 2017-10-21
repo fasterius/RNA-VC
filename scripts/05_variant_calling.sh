@@ -14,12 +14,12 @@ KNOWNSNPS=$7
 KNOWNINDELS=$8
 
 # Load modules
-module load bioinfo-tools \
+module load \
+    bioinfo-tools \
     picard/2.10.3 \
     GATK/3.8-0 \
     samtools/1.5 \
-    snpEff/4.2 \
-    bamtools/2.3.0
+    snpEff/4.2
 
 # Mark duplicates
 java -Xmx7G -jar $PICARD/picard.jar MarkDuplicates \
