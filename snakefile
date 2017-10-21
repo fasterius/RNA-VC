@@ -193,7 +193,24 @@ rule variant_calling:
         rules.align_pass2.output
     output:
         base + 'variants/{sample}.vcf'
+    params:
+        layout = lambda wildcards:
+            get_metadata(wildcards.sample, layout_col),
+        group = lambda wildcards:
+            get_metadata(wildcards.sample, group_col),
     log:
         base + 'logs/variant_calling.{sample}.log'
     shell:
-        'touch {output} 2> {log}'
+        'touch {output}'
+        # """
+        # bash scripts/05_variant_calling.sh \
+            # $(dirname {output}) \
+            # {wildcards.sample} \
+            # {wildcards.group} \
+            # {config[GEN_REF]} \
+            # {config[PICARD]} \
+            # {config[GATK]} \
+            # {config[KNOWNSNPS]} \
+            # {config[KNOWNINDELS]} \
+                # 2>&1 {log}
+        # """

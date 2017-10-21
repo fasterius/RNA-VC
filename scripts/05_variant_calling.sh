@@ -3,30 +3,15 @@
 # gVCF mode
 GVCF="no"
 
-# Check for missing input
-if [ -z ${1+x} ]; then
-    echo "ERROR: missing input values; aborting."
-    echo "Please provide input SAMPLE as first argument to this script!"
-    exit 1
-fi
-
 # Input parameters 
-SAMPLE=$1
-REF=$2
-PICARD=$3
-GATK=$4
-KNOWNSNPS=$5
-KNOWNINDELS=$6
-
-# Directories
-ALIGNMENT=data/alignment/$SAMPLE
-WORKDIR=data/variants/$SAMPLE
-REALIGN=$WORKDIR/indel_realignment
-BQSR=$WORKDIR/bqsr
-CALLS=$WORKDIR/calls
-mkdir -p $REALIGN
-mkdir -p $BQSR
-mkdir -p $CALLS
+WORKDIR=$1
+SAMPLE=$2
+GROUP=$3
+REF=$4
+PICARD=$5
+GATK=$6
+KNOWNSNPS=$7
+KNOWNINDELS=$8
 
 # Load modules
 module load bioinfo-tools \
@@ -42,15 +27,13 @@ java -Xmx7G -jar $PICARD/picard.jar MarkDuplicates \
 	OUTPUT=$REALIGN/${SAMPLE}.dedupped.bam  \
 	CREATE_INDEX=true \
 	VALIDATION_STRINGENCY=SILENT \
-	METRICS_FILE=$REALIGN/dedup.metrics.${SAMPLE}.txt \
-		> $WORKDIR/log.indel_realignment.${SAMPLE}.txt 2>&1
+	METRICS_FILE=$REALIGN/dedup.metrics.${SAMPLE}.txt
 
 # # Remove intermediate files
 # rm $ALIGNMENT/*.bam
 
 # Index intermediate bam file
-samtools index $REALIGN/${SAMPLE}.dedupped.bam \
-    >> $WORKDIR/log.indel_realignment.${SAMPLE}.txt 2>&1
+samtools index $REALIGN/${SAMPLE}.dedupped.bam
 
 # Split'N'Trim and reassign mapping qualities
 java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
@@ -61,8 +44,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-rf ReassignOneMappingQuality \
 	-RMQF 255 \
 	-RMQT 60 \
-	-U ALLOW_N_CIGAR_READS \
-    	>> $WORKDIR/log.indel_realignment.${SAMPLE}.txt 2>&1
+	-U ALLOW_N_CIGAR_READS
 
 # Remove intermediate files
 rm $REALIGN/${SAMPLE}.dedupped.bam*
@@ -73,8 +55,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-R $REF \
 	-I $REALIGN/${SAMPLE}.dedupped.split.bam \
 	-known $KNOWNINDELS \
-	-o $REALIGN/realignment_targets.list \
-		>> $WORKDIR/log.indel_realignment.${SAMPLE}.txt 2>&1
+	-o $REALIGN/realignment_targets.list
 
 java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-T IndelRealigner \
@@ -82,15 +63,13 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-I $REALIGN/${SAMPLE}.dedupped.split.bam \
 	-targetIntervals $REALIGN/realignment_targets.list \
 	-known $KNOWNINDELS \
-	-o $BQSR/${SAMPLE}.realigned_indels.bam \
-    	>> $WORKDIR/log.indel_realignment.${SAMPLE}.txt 2>&1
+	-o $BQSR/${SAMPLE}.realigned_indels.bam
 
 # Remove intermediate files    
 rm $REALIGN/${SAMPLE}.dedupped.split.bam
 
 	# Index bam file
-samtools index $BQSR/${SAMPLE}.realigned_indels.bam \
-    >> $WORKDIR/log.indel_realignment.${SAMPLE}.txt 2>&1
+samtools index $BQSR/${SAMPLE}.realigned_indels.bam
 
 # Remove intermediate files
 rm -r $REALIGN
@@ -102,8 +81,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-I $BQSR/${SAMPLE}.realigned_indels.bam \
     -knownSites $KNOWNSNPS \
 	-knownSites $KNOWNINDELS \
-	-o $BQSR/${SAMPLE}.recal.data.table.txt \
-		> $WORKDIR/log.bqsr.${SAMPLE}.txt 2>&1
+	-o $BQSR/${SAMPLE}.recal.data.table.txt
 
 # Second pass covariation modelling (BQSR)
 java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
@@ -113,8 +91,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
     -knownSites $KNOWNSNPS \
 	-knownSites $KNOWNINDELS \
 	-BQSR $BQSR/${SAMPLE}.recal.data.table.txt \
-	-o $BQSR/${SAMPLE}.post.recal.data.table.txt \
-		>> $WORKDIR/log.bqsr.${SAMPLE}.txt 2>&1
+	-o $BQSR/${SAMPLE}.post.recal.data.table.txt
 
 # Apply recalibration (BQSR)
 java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
@@ -122,8 +99,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-R $REF \
 	-I $BQSR/${SAMPLE}.realigned_indels.bam \
     -BQSR $BQSR/${SAMPLE}.recal.data.table.txt \
-	-o $BQSR/${SAMPLE}.recal.reads.bam \
-		>> $WORKDIR/log.bqsr.${SAMPLE}.txt 2>&1
+	-o $BQSR/${SAMPLE}.recal.reads.bam
 
 # Remove intermediate files
 rm $BQSR/${SAMPLE}.realigned_indels.bam*
@@ -136,8 +112,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-dontUseSoftClippedBases \
 	-stand_call_conf 20.0 \
 	-o $CALLS/${SAMPLE}.all.calls.vcf \
-	-out_mode EMIT_ALL_CONFIDENT_SITES \
-		> $WORKDIR/log.variant_calling.${SAMPLE}.txt 2>&1
+	-out_mode EMIT_ALL_CONFIDENT_SITES
 
 # gVCF mode (if applicable)
 if [ "$GVCF" == "yes" ]; then
@@ -148,8 +123,7 @@ if [ "$GVCF" == "yes" ]; then
         -dontUseSoftClippedBases \
         -stand_call_conf 20.0 \
         -emitRefConfidence GVCF \
-        -o $WORKDIR/${SAMPLE}.gvcf \
-            > $WORKDIR/log.variant_calling_gvcf.${SAMPLE}.txt 2>&1
+        -o $WORKDIR/${SAMPLE}.gvcf
 fi
 
 # Remove intermediate files
@@ -161,16 +135,14 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-R $REF \
 	--variant $CALLS/${SAMPLE}.all.calls.vcf \
 	--selectTypeToExclude NO_VARIATION \
-	-o $CALLS/${SAMPLE}.variants.vcf \
-		>> $WORKDIR/log.variant_calling.${SAMPLE}.txt 2>&1
+	-o $CALLS/${SAMPLE}.variants.vcf
 
 java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-T SelectVariants \
 	-R $REF \
 	--variant $CALLS/${SAMPLE}.all.calls.vcf \
 	--selectTypeToInclude NO_VARIATION \
-	-o $CALLS/${SAMPLE}.nonvariants.vcf \
-        >> $WORKDIR/log.variant_calling.${SAMPLE}.txt 2>&1
+	-o $CALLS/${SAMPLE}.nonvariants.vcf
 
 # Variant filtration
 java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
@@ -181,8 +153,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 	-cluster 3 \
 	-filterName FS -filter "FS > 30.0" \
 	-filterName QD -filter "QD < 2.0" \
-	-o $CALLS/${SAMPLE}.variants.filtered.vcf \
-        >> $WORKDIR/log.variant_calling.${SAMPLE}.txt 2>&1
+	-o $CALLS/${SAMPLE}.variants.filtered.vcf
 
 # Remove intermediate files
 rm $CALLS/${SAMPLE}.variants.vcf
@@ -194,8 +165,7 @@ java -Xmx7G -cp $GATK/GenomeAnalysisTK.jar \
 	-V $CALLS/${SAMPLE}.variants.filtered.vcf \
 	-V $CALLS/${SAMPLE}.nonvariants.vcf \
 	-assumeSorted \
-	-out $CALLS/${SAMPLE}.all.calls.filtered.vcf \
-        >> $WORKDIR/log.variant_calling.${SAMPLE}.txt 2>&1
+	-out $CALLS/${SAMPLE}.all.calls.filtered.vcf
 
 # Remove intermediate files
 rm $CALLS/${SAMPLE}.variants.filtered.vcf $CALLS/${SAMPLE}.nonvariants.vcf
