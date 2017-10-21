@@ -175,7 +175,17 @@ rule align_pass2:
     log:
         base + 'logs/alignment_pass2.{sample}.log'
     shell:
-        'touch {output} 2> {log}'
+        'touch {output}'
+        # """
+        # bash scripts/04_alignment_pass2.sh \
+            # $(dirname {output}) \
+            # {wildcards.sample} \
+            # {params.layout} \
+            # {params.group} \
+            # {config[GEN_REF]} \
+            # {config[STAR_REF]} \
+                # 2>&1 {log}
+        # """
 
 # Rule: variant calling
 rule variant_calling:

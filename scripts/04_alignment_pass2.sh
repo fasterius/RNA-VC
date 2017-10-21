@@ -1,16 +1,16 @@
 #!/bin/bash -l
 
 # Get input parameters
-SAMPLE=$1
-LAYOUT=$2
-GROUP=$3
-GEN_REF=$4
-STAR_REF=$5
+WORKDIR=$1
+SAMPLE=$2
+LAYOUT=$3
+GROUP=$4
+GEN_REF=$5
+STAR_REF=$6
 
-# Directories
-FASTQDIR=data/fastq/$SAMPLE
-WORKDIR=data/alignment/$SAMPLE
-JUNCDIR=data/alignment/junctions/$GROUP
+# Get directory for fastq-files and junction files
+FASTQDIR=$(echo "$WORKDIR" | sed 's/alignment/fastq/g')
+JUNCDIR=$(echo "$WORKDIR" | sed 's/alignment/junctions/g')
 
 # Get read layout and FASTQ input files
 if [ "$LAYOUT" == "PAIRED" ]; then
@@ -26,10 +26,6 @@ fi
 
 # Load modules
 module load bioinfo-tools star/2.5.3a samtools/1.5
-
-# Set paths
-# REF_STAR=/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/STARIndex/
-# REF=/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/WholeGenomeFasta/genome.fa
 
 # Collect junctions
 JUNCTIONS=$(find $JUNCDIR/junctions -name "*junctions.tab" | xargs)
@@ -47,5 +43,8 @@ star --genomeDir $REF_STAR \
 # Move alignment file
 mv $WORKDIR/pass2/Aligned.out.bam > $WORKDIR/${SAMPLE}.bam
 
-# Move log file
-cat $WORKDIR/pass2/Log.out > $WORKDIR/log.alignment.pass2.$SAMPLE.txt
+# Remove temporary files
+rm -r $WORKDIR/pass2
+
+# # Move log file
+# cat $WORKDIR/pass2/Log.out > $WORKDIR/log.alignment.pass2.$SAMPLE.txt
