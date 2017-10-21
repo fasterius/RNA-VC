@@ -76,11 +76,11 @@ rule clean:
 # Rule: download and estimate expression on single-end data
 rule download:
     output:
-        expand(tmp + 'fastq/{sample}.fastq.gz', zip,
+        expand(tmp + 'fastq/{sample}/{sample}.fastq.gz', zip,
             study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE),
-        expand(tmp + 'fastq/{sample}_1.fastq.gz', zip,
+        expand(tmp + 'fastq/{sample}/{sample}_1.fastq.gz', zip,
             study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE),
-        expand(tmp + 'fastq/{sample}_2.fastq.gz', zip,
+        expand(tmp + 'fastq/{sample}/{sample}_2.fastq.gz', zip,
             study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
     log:
         expand(base + 'logs/download.{sample}.log', zip,
@@ -117,7 +117,7 @@ rule expression:
     input:
         rules.download.output
     output:
-        base + 'expression/{sample}.abundance.tsv'
+        base + 'expression/{sample}.abundance.tsv.tmp'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
@@ -166,7 +166,7 @@ rule align_pass2:
         rules.download.output,
         rules.align_pass1.output
     output:
-        tmp + 'alignment/{sample}.bam'
+        tmp + 'alignment/{sample}.bam.tmp'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
@@ -186,6 +186,23 @@ rule align_pass2:
             # {config[STAR_REF]} \
                 # 2>&1 {log}
         # """
+
+# Rule: fastq cleanup
+rule fastq_cleanup:
+    input:
+        expression = base + 'expression/{sample}.abundance.tsv.tmp',
+        alignment = tmp + 'alignment/{sample}.bam.tmp'
+    output:
+        expression = base + 'expression/{sample}.abundance.tsv',
+        alignment = tmp + 'alignment/{sample}.bam'
+    shell:
+        """
+        mv {input.expression} {output.expression}
+        mv {input.alignment} {output.alignment}
+        FASTQDIR=".tmp/data/{wildcards.study}/{wildcards.group}/"
+        FASTQDIR+="fastq/{wildcards.sample}"
+        rm -r $FASTQDIR
+        """
 
 # Rule: variant calling
 rule variant_calling:
