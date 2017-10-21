@@ -207,9 +207,9 @@ rule fastq_cleanup:
 # Rule: variant calling
 rule variant_calling:
     input:
-        rules.align_pass2.output
+        rules.fastq_cleanup.output.alignment
     output:
-        base + 'variants/{sample}.vcf'
+        base + 'variants/{sample}.vcf.tmp'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
@@ -231,3 +231,17 @@ rule variant_calling:
             # {config[KNOWNINDELS]} \
                 # 2>&1 {log}
         # """
+
+# Rule: alignment cleanup
+rule alignment_cleanup:
+    input:
+        base + 'variants/{sample}.vcf.tmp'
+    output:
+        base + 'variants/{sample}.vcf'
+    shell:
+        """
+        mv {input} {output}
+        BAMFILE=".tmp/data/{wildcards.study}/{wildcards.group}/"
+        BAMFILE+="alignment/{wildcards.sample}.bam"
+        rm $BAMFILE
+        """
