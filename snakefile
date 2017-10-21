@@ -17,7 +17,7 @@ group_col = config["group_col"]
 sample_col = config["sample_col"]
 layout_col = config["layout_col"]
 
-# Get samples and groups from metadata
+# Get studies, samples and groups from metadata
 STUDIES = metadata[study_col]
 STUDIES_SE = metadata.loc[metadata[layout_col] == 'SINGLE'][study_col]
 STUDIES_PE = metadata.loc[metadata[layout_col] == 'PAIRED'][study_col]
@@ -27,29 +27,6 @@ GROUPS_PE = metadata.loc[metadata[layout_col] == 'PAIRED'][group_col]
 SAMPLES = metadata[sample_col]
 SAMPLES_SE = metadata.loc[metadata[layout_col] == 'SINGLE'][sample_col]
 SAMPLES_PE = metadata.loc[metadata[layout_col] == 'PAIRED'][sample_col]
-
-# # Function for specifying layout-dependent file names
-# def input_sample_layout(wildcards):
-#
-    # # Get current sample
-    # sample = wildcards.sample
-    # study = wildcards.study
-#
-    # # Get sample layout
-    # layout = metadata.loc[metadata[sample_col] == sample][layout_col].values[0]
-#
-    # # Sample string
-    # string = '.tmp/data/{study}/fastq/{sample}_1.fastq.gz'
-    # string = string.format(sample=sample, study=study)
-#
-    # # Get sample names
-    # if layout == 'SINGLE':
-        # samples = [string.replace('_1', '')]
-    # elif layout == 'PAIRED':
-        # samples = [string, string.replace('_1', '_2')]
-#
-    # # Return sample names
-    # return samples
 
 # Function for fetching specified metadata from a sample
 def get_metadata(sample, column):
@@ -105,14 +82,13 @@ rule download:
             layout = current[layout_col].values[0]
             
             # Execute download script with current parameters
-            shell('touch {output}')
-            # shell("bash scripts/01_download.sh \
-                    # {path} \
-                    # {sample} \
-                    # {layout} \
-                    # {config[GEN_REF]} \
-                    # {config[SRA_CACHE]} \
-                        # 2>&1 {log}")
+            shell("bash scripts/01_download.sh \
+                    {path} \
+                    {sample} \
+                    {layout} \
+                    {config[GEN_REF]} \
+                    {config[SRA_CACHE]} \
+                        2>&1 {log}")
 
 # Rule: expression estimation
 rule expression:
@@ -126,15 +102,14 @@ rule expression:
     log:
         base + 'logs/02_expression.{sample}.log'
     shell:
-        'touch {output}'
-        # """
-        # bash scripts/02_expression.sh \
-                 # $(dirname {output}) \
-                 # {wildcards.sample} \
-                 # {params.layout} \
-                 # {config[GEN_REF]} \
-                    # 2>&1 {log}
-        # """
+        """
+        bash scripts/02_expression.sh \
+                 $(dirname {output}) \
+                 {wildcards.sample} \
+                 {params.layout} \
+                 {config[GEN_REF]} \
+                    2>&1 {log}
+        """
 
 # Rule: first-pass alignment
 rule align_pass1:
@@ -150,17 +125,16 @@ rule align_pass1:
     log:
         base + 'logs/03_alignment_pass1.{sample}.log'
     shell:
-        'touch {output}'
-        # """
-        # bash scripts/03_alignment_pass1.sh \
-            # $(dirname {output}) \
-            # {wildcards.sample} \
-            # {params.layout} \
-            # {params.group} \
-            # {config[GEN_REF]} \
-            # {config[STAR_REF]} \
-               # 2>&1 {log}
-        # """
+        """
+        bash scripts/03_alignment_pass1.sh \
+            $(dirname {output}) \
+            {wildcards.sample} \
+            {params.layout} \
+            {params.group} \
+            {config[GEN_REF]} \
+            {config[STAR_REF]} \
+               2>&1 {log}
+        """
 
 # Rule: second-pass alignment
 rule align_pass2:
@@ -177,17 +151,16 @@ rule align_pass2:
     log:
         base + 'logs/04_alignment_pass2.{sample}.log'
     shell:
-        'touch {output}'
-        # """
-        # bash scripts/04_alignment_pass2.sh \
-            # $(dirname {output}) \
-            # {wildcards.sample} \
-            # {params.layout} \
-            # {params.group} \
-            # {config[GEN_REF]} \
-            # {config[STAR_REF]} \
-                # 2>&1 {log}
-        # """
+        """
+        bash scripts/04_alignment_pass2.sh \
+            $(dirname {output}) \
+            {wildcards.sample} \
+            {params.layout} \
+            {params.group} \
+            {config[GEN_REF]} \
+            {config[STAR_REF]} \
+                2>&1 {log}
+        """
 
 # Rule: fastq cleanup
 rule fastq_cleanup:
@@ -220,19 +193,18 @@ rule variant_calling:
     log:
         base + 'logs/05_variant_calling.{sample}.log'
     shell:
-        'touch {output}'
-        # """
-        # bash scripts/05_variant_calling.sh \
-            # $(dirname {output}) \
-            # {wildcards.sample} \
-            # {wildcards.group} \
-            # {config[GEN_REF]} \
-            # {config[PICARD]} \
-            # {config[GATK]} \
-            # {config[KNOWNSNPS]} \
-            # {config[KNOWNINDELS]} \
-                # 2>&1 {log}
-        # """
+        """
+        bash scripts/05_variant_calling.sh \
+            $(dirname {output}) \
+            {wildcards.sample} \
+            {wildcards.group} \
+            {config[GEN_REF]} \
+            {config[PICARD]} \
+            {config[GATK]} \
+            {config[KNOWNSNPS]} \
+            {config[KNOWNINDELS]} \
+                2>&1 {log}
+        """
 
 # Rule: alignment cleanup
 rule alignment_cleanup:
