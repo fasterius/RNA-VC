@@ -89,11 +89,20 @@ rule download:
             study = STUDIES, group = GROUPS, sample = SAMPLES)
     run:
         for current_output in output:
-            sample = current_output.split('/')[3]
+
+            # Get current sample
+            fastq = current_output.split('/')[5]
+            sample = fastq.split('.')[0]
+
+            # Get current layout
+            current = metadata.loc[metadata[sample_col] == sample]
+            layout = current[layout_col].values
+
+            # Execute download script
             shell('touch {current_output} 2> {log}')
         # """
-        # bash scripts/01_download_fastq.sh {wildcards.sample} \
-            # {params.layout} {config[GEN_REF]} {config[SRA_CACHE]}
+        # bash scripts/01_download.sh {wildcards.sample} \
+            # {layout} {config[GEN_REF]} {config[SRA_CACHE]}
         # """
 
 # Rule: expression estimation
