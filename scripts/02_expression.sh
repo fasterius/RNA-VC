@@ -1,13 +1,21 @@
 #!/bin/bash -l
 
 # Get input parameters
-SAMPLE=$1
-LAYOUT=$2
-REF=$3
+WORKDIR=$1
+SAMPLE=$2
+LAYOUT=$3
+REF=$4
 
-# Working directory
-FASTQDIR=data/fastq/$SAMPLE
-EXPRDIR=data/expression/$SAMPLE
+# Get directory for fastq-files
+FASTQDIR=$(echo "$WORKDIR" | sed 's/expression/fastq/g')
+
+echo $FASTQDIR
+echo $WORKDIR
+echo $SAMPLE
+echo $LAYOUT
+echo $REF
+touch $WORKDIR/${SAMPLE}.abundance.tsv
+exit 0
 
 # Estimate transcript expression with Kallisto
 if [ "$LAYOUT" == "PAIRED" ]; then

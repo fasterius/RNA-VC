@@ -1,10 +1,11 @@
 #!/bin/bash -l
 
 # Get input parameters
-SAMPLE=$1
-LAYOUT=$2
-REF=$3
-CACHEDIR=$4
+WORKDIR=$1
+SAMPLE=$2
+LAYOUT=$3
+REF=$4
+CACHEDIR=$5
 
 # Get layout from input file name
 if [ "$LAYOUT" == "PAIRED" ]; then
@@ -21,13 +22,9 @@ fi
 # Load modules
 module load bioinfo-tools sratools/2.8.0
 
-# Working directory
-FASTQDIR=data/fastq/$SAMPLE
-EXPRDIR=data/expression/$SAMPLE
-
 # Download FASTQ files
 fastq-dump \
-    --outdir $FASTQDIR \
+    --outdir $WORKDIR \
     --gzip \
     --skip-technical \
     --readids \

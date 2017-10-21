@@ -2,6 +2,7 @@
 
 # Packages
 import pandas as pd
+import re
 
 # Config file
 configfile: "config.yaml"
@@ -28,7 +29,7 @@ SAMPLES_SE = metadata.loc[metadata[layout_col] == 'SINGLE'][sample_col]
 SAMPLES_PE = metadata.loc[metadata[layout_col] == 'PAIRED'][sample_col]
 
 # # Function for specifying layout-dependent file names
-# def input_sample_layouts(wildcards):
+# def input_sample_layout(wildcards):
 #
     # # Get current sample
     # sample = wildcards.sample
@@ -37,11 +38,8 @@ SAMPLES_PE = metadata.loc[metadata[layout_col] == 'PAIRED'][sample_col]
     # # Get sample layout
     # layout = metadata.loc[metadata[sample_col] == sample][layout_col].values[0]
 #
-    # # # Get sample parameters
-    # # study = metadata.loc[metadata[sample_col] == sample][study_col].values[0]
-#
     # # Sample string
-    # string = '.tmp/data/{study}/fastq/{sample}/{sample}_1.fastq.gz'
+    # string = '.tmp/data/{study}/fastq/{sample}_1.fastq.gz'
     # string = string.format(sample=sample, study=study)
 #
     # # Get sample names
@@ -49,7 +47,7 @@ SAMPLES_PE = metadata.loc[metadata[layout_col] == 'PAIRED'][sample_col]
         # samples = [string.replace('_1', '')]
     # elif layout == 'PAIRED':
         # samples = [string, string.replace('_1', '_2')]
-    #
+#
     # # Return sample names
     # return samples
 
@@ -88,22 +86,31 @@ rule download:
         expand(base + 'logs/download.{sample}.log', zip,
             study = STUDIES, group = GROUPS, sample = SAMPLES)
     run:
-        for current_output in output:
+        for path in output:
+
+            # Define file path
+            separated_path = path.split('/')
 
             # Get current sample
-            fastq = current_output.split('/')[5]
-            sample = fastq.split('.')[0]
+            fastq = separated_path[-1]
+            sample = re.sub('_[1-2]', '', fastq.split('.')[0])
+
+            # Get file path
+            path = path.replace('/' + fastq, '')
 
             # Get current layout
             current = metadata.loc[metadata[sample_col] == sample]
-            layout = current[layout_col].values
-
-            # Execute download script
-            shell('touch {current_output} 2> {log}')
-        # """
-        # bash scripts/01_download.sh {wildcards.sample} \
-            # {layout} {config[GEN_REF]} {config[SRA_CACHE]}
-        # """
+            layout = current[layout_col].values[0]
+            
+            # Execute download script with current parameters
+            shell('touch {output}')
+            # shell("bash scripts/01_download.sh \
+                    # {path} \
+                    # {sample} \
+                    # {layout} \
+                    # {config[GEN_REF]} \
+                    # {config[SRA_CACHE]} \
+                        # 2>&1 {log}")
 
 # Rule: expression estimation
 rule expression:
@@ -111,15 +118,20 @@ rule expression:
         rules.download.output
     output:
         base + 'expression/{sample}.abundance.tsv'
-        # expand(base + 'expression/{sample}.abundance.tsv', zip,
-            # study = STUDIES, group = GROUPS, sample = SAMPLES)
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
     log:
         base + 'logs/expression.{sample}.log'
     shell:
-        'touch {output} 2> {log}'
+        'touch {output}'
+        # """
+        # bash scripts/02_expression.sh \
+                 # $(dirname {output}) \
+                 # {wildcards.sample} \
+                 # {params.layout} \
+                 # {config[GEN_REF]}
+        # """
 
 # Rule: first-pass alignment
 rule align_pass1:
