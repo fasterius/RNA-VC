@@ -2,7 +2,8 @@
 
 # Run snakemake
 snakemake \
-    -s snakefile \
+    --snakefile snakefile \
+    --jobs 20 \
     --keep-going \
     --cluster-config cluster.yaml \
     --cluster "sbatch \
