@@ -83,7 +83,7 @@ rule download:
         expand(tmp + 'fastq/{sample}/{sample}_2.fastq.gz', zip,
             study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
     log:
-        expand(base + 'logs/download.{sample}.log', zip,
+        expand(base + 'logs/01_download.{sample}.log', zip,
             study = STUDIES, group = GROUPS, sample = SAMPLES)
     run:
         for path in output:
@@ -122,7 +122,7 @@ rule expression:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
     log:
-        base + 'logs/expression.{sample}.log'
+        base + 'logs/02_expression.{sample}.log'
     shell:
         'touch {output}'
         # """
@@ -146,7 +146,7 @@ rule align_pass1:
         group = lambda wildcards:
             get_metadata(wildcards.sample, group_col)
     log:
-        base + 'logs/alignment_pass1.{sample}.log'
+        base + 'logs/03_alignment_pass1.{sample}.log'
     shell:
         'touch {output}'
         # """
@@ -173,7 +173,7 @@ rule align_pass2:
         group = lambda wildcards:
             get_metadata(wildcards.sample, group_col),
     log:
-        base + 'logs/alignment_pass2.{sample}.log'
+        base + 'logs/04_alignment_pass2.{sample}.log'
     shell:
         'touch {output}'
         # """
@@ -216,7 +216,7 @@ rule variant_calling:
         group = lambda wildcards:
             get_metadata(wildcards.sample, group_col),
     log:
-        base + 'logs/variant_calling.{sample}.log'
+        base + 'logs/05_variant_calling.{sample}.log'
     shell:
         'touch {output}'
         # """
