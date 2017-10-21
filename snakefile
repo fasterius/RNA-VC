@@ -130,7 +130,8 @@ rule expression:
                  # $(dirname {output}) \
                  # {wildcards.sample} \
                  # {params.layout} \
-                 # {config[GEN_REF]}
+                 # {config[GEN_REF]} \
+                    # 2>&1 {log}
         # """
 
 # Rule: first-pass alignment
@@ -147,11 +148,16 @@ rule align_pass1:
     log:
         base + 'logs/alignment_pass1.{sample}.log'
     shell:
-        'touch {output} 2> {log}'
+        'touch {output}'
         # """
-        # bash scripts/02_alignment.sh {wildcards.sample} \
-            # {params.layout} {params.group} \
-            # {config[GEN_REF]} {config[STAR_REF]}
+        # bash scripts/03_alignment_pass1.sh \
+            # $(dirname {output}) \
+            # {wildcards.sample} \
+            # {params.layout} \
+            # {params.group} \
+            # {config[GEN_REF]} \
+            # {config[STAR_REF]} \
+               # 2>&1 {log}
         # """
 
 # Rule: second-pass alignment
