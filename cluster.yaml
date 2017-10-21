@@ -1,0 +1,40 @@
+__default__:
+    account: 'erikfas@kth.se'
+    time: '01:00:00'
+    partition: 'core'
+    n_tasks: 1
+    log: '{log}'
+    mail_type: 'FAIL'
+
+download:
+    time: '10:00:00'
+    job_name: 'download.{sample}'
+
+expression:
+    time: '02:00:00'
+    job_name: 'expression.{sample}'
+
+align_pass1:
+    time: '02:00:00'
+    partition: 'node'
+    n_tasks: 16
+    job_name: 'align_pass1.{sample}'
+
+align_pass2:
+    time: '02:00:00'
+    partition: 'node'
+    n_tasks: 16
+    job_name: 'align_pass2.{sample}'
+
+fastq_cleanup:
+    time: '00:01:00'
+    job_name: 'fastq_cleanup.{sample}'
+
+variant_calling:
+    time: '48:00:00'
+    job_name: 'variant_calling.{sample}'
+
+alignment_cleanup:
+    time: '00:01:00'
+    job_name: 'alignment_cleanup.{sample}'
+    mail_type: 'FAIL,END'
