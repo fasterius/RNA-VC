@@ -86,10 +86,13 @@ rule download:
             study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE),
         expand(base + 'expression/{sample}.abundance.tsv', zip,
             study = STUDIES, group = GROUPS, sample = SAMPLES)
+    log:
+        expand(base + 'logs/download.{sample}.log', zip,
+            study = STUDIES, group = GROUPS, sample = SAMPLES)
     run:
         for current_output in output:
             sample = current_output.split('/')[3]
-            shell('touch {current_output}')
+            shell('touch {current_output} 2> {log}')
         # """
         # bash scripts/01_download_fastq.sh {wildcards.sample} \
             # {params.layout} {config[GEN_REF]} {config[SRA_CACHE]}
@@ -106,8 +109,10 @@ rule align_pass1:
             get_metadata(wildcards.sample, layout_col),
         group = lambda wildcards:
             get_metadata(wildcards.sample, group_col)
+    log:
+        base + 'logs/alignment_pass1.{sample}.log'
     shell:
-        'touch {output}'
+        'touch {output} 2> {log}'
         # """
         # bash scripts/02_alignment.sh {wildcards.sample} \
             # {params.layout} {params.group} \
@@ -126,8 +131,10 @@ rule align_pass2:
             get_metadata(wildcards.sample, layout_col),
         group = lambda wildcards:
             get_metadata(wildcards.sample, group_col),
+    log:
+        base + 'logs/alignment_pass2.{sample}.log'
     shell:
-        'touch {output}'
+        'touch {output} 2> {log}'
 
 # Rule: variant calling
 rule variant_calling:
@@ -135,5 +142,7 @@ rule variant_calling:
         rules.align_pass2.output
     output:
         base + 'variants/{sample}.vcf'
+    log:
+        base + 'logs/variant_calling.{sample}.log'
     shell:
-        'touch {output}'
+        'touch {output} 2> {log}'
