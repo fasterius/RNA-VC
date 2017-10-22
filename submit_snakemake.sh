@@ -10,6 +10,6 @@ snakemake \
                   --account {cluster.account} \
                   --time {cluster.time} \
                   --partition {cluster.partition} \
-                  --n-tasks {cluster.n_tasks} \
-                  --job-name {cluster.job_name} \
-                  --mail-type {cluster.mail_type}"
+                  --ntasks {cluster.ntasks} \
+                  --mail-type {cluster.mail_type} \
+                  --job-name {cluster.job_name}"
