@@ -41,9 +41,9 @@ tmp = '.snake_tmp/' + base
 rule all:
     input:
         expand(base + 'expression/{sample}.abundance.tsv', zip,
-            study = STUDIES, group = GROUPS, sample = SAMPLES),
+            study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE),
         expand(base + 'variants/{sample}.vcf', zip,
-            study = STUDIES, group = GROUPS, sample = SAMPLES)
+            study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE)
     shell:
         'rm -rf .snake_tmp'
 
@@ -55,40 +55,55 @@ rule clean:
 # Rule: download and estimate expression on single-end data
 rule download:
     output:
-        expand(tmp + 'fastq/{sample}/{sample}.fastq.gz', zip,
-            study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE),
-        expand(tmp + 'fastq/{sample}/{sample}_1.fastq.gz', zip,
-            study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE),
-        expand(tmp + 'fastq/{sample}/{sample}_2.fastq.gz', zip,
-            study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
+        tmp + 'fastq/{sample}/{sample}.fastq.gz'
+        # expand(tmp + 'fastq/{sample}/{sample}.fastq.gz', zip,
+            # study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE),
+        # expand(tmp + 'fastq/{sample}/{sample}_1.fastq.gz', zip,
+            # study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE),
+        # expand(tmp + 'fastq/{sample}/{sample}_2.fastq.gz', zip,
+            # study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
+    params:
+        layout = lambda wildcards:
+            get_metadata(wildcards.sample, layout_col),
     log:
-        expand(base + 'logs/01_download.{sample}.log', zip,
-            study = STUDIES, group = GROUPS, sample = SAMPLES)
-    run:
-        for path in output:
-
-            # Define file path
-            separated_path = path.split('/')
-
-            # Get current sample
-            fastq = separated_path[-1]
-            sample = re.sub('_[1-2]', '', fastq.split('.')[0])
-
-            # Get file path
-            path = path.replace('/' + fastq, '')
-
-            # Get current layout
-            current = metadata.loc[metadata[sample_col] == sample]
-            layout = current[layout_col].values[0]
-            
-            # Execute download script with current parameters
-            shell("bash scripts/01_download.sh \
-                    {path} \
-                    {sample} \
-                    {layout} \
-                    {config[GEN_REF]} \
-                    {config[SRA_CACHE]} \
-                        2>&1 {log}")
+        base + 'logs/01_download.{sample}.log'
+        # expand(base + 'logs/01_download.{sample}.log', zip,
+            # study = STUDIES, group = GROUPS, sample = SAMPLES)
+    shell:
+        """
+        bash scripts/01_download.sh \
+            $(dirname {output}) \
+            {wildcards.sample} \
+            {params.layout} \
+            {config[GEN_REF]} \
+            {config[SRA_CACHE]} \
+                2>&1 {log}
+        """
+    # run:
+        # for path in output:
+#
+            # # Define file path
+            # separated_path = path.split('/')
+#
+            # # Get current sample
+            # fastq = separated_path[-1]
+            # sample = re.sub('_[1-2]', '', fastq.split('.')[0])
+#
+            # # Get file path
+            # path = path.replace('/' + fastq, '')
+#
+            # # Get current layout
+            # current = metadata.loc[metadata[sample_col] == sample]
+            # layout = current[layout_col].values[0]
+            #
+            # # Execute download script with current parameters
+            # shell("bash scripts/01_download.sh \
+                    # {path} \
+                    # {sample} \
+                    # {layout} \
+                    # {config[GEN_REF]} \
+                    # {config[SRA_CACHE]} \
+                        # 2>&1 {log}")
 
 # Rule: expression estimation
 rule expression:
