@@ -1,7 +1,7 @@
 # Metadata
-metadata: "test.metadata.txt"
+metadata: "metadata.txt"
 study_col: "GSE"
-group_col: "group"
+group_col: "cell_line"
 sample_col: "SRR"
 layout_col: "LibraryLayout"
 
