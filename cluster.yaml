@@ -3,7 +3,7 @@ __default__:
     time: '02:00:00'
     partition: 'core'
     ntasks: 1
-    log: '{log}'
+    log: '{rule}.{log}'
     mail_type: 'FAIL'
     job_name: '{rule}.{wildcards.sample}'
 

@@ -35,67 +35,58 @@ def get_metadata(sample, column):
 
 # Strings for base directories
 base = 'data/{study}/{group}/'
-tmp = '.snake_tmp/' + base
+tmpdir = '.tmp_snake'
+tmp = tmpdir + '/' + base
 
 # Rule: final outputs
 rule all:
     input:
-        expand(base + 'expression/{sample}.abundance.tsv', zip,
+        expand(base + 'expression/{sample}', zip,
             study = STUDIES, group = GROUPS, sample = SAMPLES),
         expand(base + 'variants/{sample}.vcf', zip,
             study = STUDIES, group = GROUPS, sample = SAMPLES)
     shell:
-        'rm -rf .snake_tmp'
+        'rm -rf {tmpdir}'
 
 # Rule: clean
 rule clean:
     shell:
-        'rm -rf data .snake_tmp'
+        'rm -rf data {tmpdir}'
 
-# Rule: download and estimate expression on single-end data
+# Rule: download raw data
 rule download:
     output:
-        expand(tmp + 'fastq/{sample}/{sample}.fastq.gz', zip,
-            study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE),
-        expand(tmp + 'fastq/{sample}/{sample}_1.fastq.gz', zip,
-            study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE),
-        expand(tmp + 'fastq/{sample}/{sample}_2.fastq.gz', zip,
-            study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
+        tmp + 'fastq/{sample}/{sample}.fastq.gz'
+        # expand(tmp + 'fastq/{sample}/{sample}.fastq.gz', zip,
+            # study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE),
+        # expand(tmp + 'fastq/{sample}/{sample}_1.fastq.gz', zip,
+            # study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE),
+        # expand(tmp + 'fastq/{sample}/{sample}_2.fastq.gz', zip,
+            # study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
+    params:
+        layout = lambda wildcards:
+            get_metadata(wildcards.sample, layout_col),
     log:
-        expand(base + 'logs/01_download.{sample}.log', zip,
-            study = STUDIES, group = GROUPS, sample = SAMPLES)
-    run:
-        for path in output:
-
-            # Define file path
-            separated_path = path.split('/')
-
-            # Get current sample
-            fastq = separated_path[-1]
-            sample = re.sub('_[1-2]', '', fastq.split('.')[0])
-
-            # Get file path
-            path = path.replace('/' + fastq, '')
-
-            # Get current layout
-            current = metadata.loc[metadata[sample_col] == sample]
-            layout = current[layout_col].values[0]
-            
-            # Execute download script with current parameters
-            shell("bash scripts/01_download.sh \
-                    {path} \
-                    {sample} \
-                    {layout} \
-                    {config[GEN_REF]} \
-                    {config[SRA_CACHE]} \
-                        2>&1 {log}")
+        base + 'logs/01_download.{sample}.log'
+        # expand(base + 'logs/01_download.{sample}.log', zip,
+            # study = STUDIES, group = GROUPS, sample = SAMPLES)
+    shell:
+        """
+        bash scripts/01_download.sh \
+            $(dirname {output}) \
+            {wildcards.sample} \
+            {params.layout} \
+            {config[GEN_REF]} \
+            {config[SRA_CACHE]} \
+                &> {log}
+        """
 
 # Rule: expression estimation
 rule expression:
     input:
         rules.download.output
     output:
-        base + 'expression/{sample}.abundance.tsv.tmp'
+        tmp + 'expression/{sample}'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
@@ -104,11 +95,12 @@ rule expression:
     shell:
         """
         bash scripts/02_expression.sh \
+                 $(dirname {input}) \
                  $(dirname {output}) \
                  {wildcards.sample} \
                  {params.layout} \
-                 {config[GEN_REF]} \
-                    2>&1 {log}
+                 {config[SALMON_REF]} \
+                    &> {log}
         """
 
 # Rule: first-pass alignment
@@ -127,20 +119,20 @@ rule align_pass1:
     shell:
         """
         bash scripts/03_alignment_pass1.sh \
+            $(dirname {input}) \
             $(dirname {output}) \
             {wildcards.sample} \
             {params.layout} \
             {params.group} \
-            {config[GEN_REF]} \
             {config[STAR_REF]} \
-               2>&1 {log}
+               &> {log}
         """
 
 # Rule: second-pass alignment
 rule align_pass2:
     input:
-        rules.download.output,
-        rules.align_pass1.output
+        fastq = rules.download.output,
+        junctions = rules.align_pass1.output
     output:
         tmp + 'alignment/{sample}.bam.tmp'
     params:
@@ -153,28 +145,29 @@ rule align_pass2:
     shell:
         """
         bash scripts/04_alignment_pass2.sh \
+            $(dirname {input.fastq}) \
+            $(dirname {input.junctions}) \
             $(dirname {output}) \
             {wildcards.sample} \
             {params.layout} \
             {params.group} \
-            {config[GEN_REF]} \
             {config[STAR_REF]} \
-                2>&1 {log}
+                &> {log}
         """
 
 # Rule: fastq cleanup
 rule fastq_cleanup:
     input:
-        expression = base + 'expression/{sample}.abundance.tsv.tmp',
+        expression = tmp + 'expression/{sample}',
         alignment = tmp + 'alignment/{sample}.bam.tmp'
     output:
-        expression = base + 'expression/{sample}.abundance.tsv',
+        expression = base + 'expression/{sample}',
         alignment = tmp + 'alignment/{sample}.bam'
     shell:
         """
         mv {input.expression} {output.expression}
         mv {input.alignment} {output.alignment}
-        FASTQDIR=".snake_tmp/data/{wildcards.study}/{wildcards.group}/"
+        FASTQDIR="{tmp}/data/{wildcards.study}/{wildcards.group}/"
         FASTQDIR+="fastq/{wildcards.sample}"
         rm -r $FASTQDIR
         """
@@ -184,7 +177,7 @@ rule variant_calling:
     input:
         rules.fastq_cleanup.output.alignment
     output:
-        base + 'variants/{sample}.vcf.tmp'
+        tmp + 'variants/{sample}.vcf'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
@@ -195,6 +188,7 @@ rule variant_calling:
     shell:
         """
         bash scripts/05_variant_calling.sh \
+            $(dirname {input}) \
             $(dirname {output}) \
             {wildcards.sample} \
             {wildcards.group} \
@@ -203,19 +197,19 @@ rule variant_calling:
             {config[GATK]} \
             {config[KNOWNSNPS]} \
             {config[KNOWNINDELS]} \
-                2>&1 {log}
+                &> {log}
         """
 
 # Rule: alignment cleanup
 rule alignment_cleanup:
     input:
-        base + 'variants/{sample}.vcf.tmp'
+        tmp + 'variants/{sample}.vcf'
     output:
         base + 'variants/{sample}.vcf'
     shell:
         """
         mv {input} {output}
-        BAMFILE=".snake_tmp/data/{wildcards.study}/{wildcards.group}/"
+        BAMFILE="{tmp}/data/{wildcards.study}/{wildcards.group}/"
         BAMFILE+="alignment/{wildcards.sample}.bam"
         rm $BAMFILE
         """
