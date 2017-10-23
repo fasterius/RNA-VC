@@ -41,7 +41,7 @@ tmp = tmpdir + '/' + base
 # Rule: final outputs
 rule all:
     input:
-        expand(base + 'expression/{sample}', zip,
+        expand(base + 'expression/{sample}/{sample}.quant.sf', zip,
             study = STUDIES, group = GROUPS, sample = SAMPLES),
         expand(base + 'variants/{sample}.vcf', zip,
             study = STUDIES, group = GROUPS, sample = SAMPLES)
@@ -54,28 +54,54 @@ rule clean:
         'rm -rf data {tmpdir}'
 
 # Rule: download raw data
-rule download:
+rule download_SE:
     output:
-        tmp + 'fastq/{sample}/{sample}.fastq.gz'
-        # expand(tmp + 'fastq/{sample}/{sample}.fastq.gz', zip,
-            # study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE),
+        # tmp + 'fastq/{sample}/{sample}.fastq.gz'
+        expand(tmp + 'fastq/{sample}/{sample}.fastq.gz', zip,
+            study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE),
         # expand(tmp + 'fastq/{sample}/{sample}_1.fastq.gz', zip,
             # study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE),
         # expand(tmp + 'fastq/{sample}/{sample}_2.fastq.gz', zip,
             # study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
-    params:
-        layout = lambda wildcards:
-            get_metadata(wildcards.sample, layout_col),
+    # params:
+        # layout = lambda wildcards:
+            # get_metadata(wildcards.sample, layout_col),
     log:
-        base + 'logs/01_download.{sample}.log'
-        # expand(base + 'logs/01_download.{sample}.log', zip,
-            # study = STUDIES, group = GROUPS, sample = SAMPLES)
+        # base + 'logs/01_download.{sample}.log'
+        expand(base + 'logs/01_download.{sample}.log', zip,
+            study = STUDIES_SE, group = GROUPS_SE, sample = SAMPLES_SE)
     shell:
         """
+        FASTQ=$(basename {output})
+        SAMPLE=$(echo $FASTQ | sed 's/.fastq.gz//g')
         bash scripts/01_download.sh \
             $(dirname {output}) \
-            {wildcards.sample} \
-            {params.layout} \
+            $SAMPLE \
+            SINGLE \
+            {config[GEN_REF]} \
+            {config[SRA_CACHE]} \
+                &> {log}
+        """
+
+rule download_PE:
+    output:
+        expand(tmp + 'fastq/{sample}/{sample}.fastq_1.gz', zip,
+            study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
+    # params:
+        # layout = lambda wildcards:
+            # get_metadata(wildcards.sample, layout_col),
+    log:
+        # base + 'logs/01_download.{sample}.log'
+        expand(base + 'logs/01_download.{sample}.log', zip,
+            study = STUDIES_PE, group = GROUPS_PE, sample = SAMPLES_PE)
+    shell:
+        """
+        FASTQ=$(basename {output})
+        SAMPLE=$(echo $FASTQ | sed 's/.fastq_1.gz//g')
+        bash scripts/01_download.sh \
+            $(dirname {output}) \
+            $SAMPLE \
+            PAIRED \
             {config[GEN_REF]} \
             {config[SRA_CACHE]} \
                 &> {log}
@@ -84,9 +110,10 @@ rule download:
 # Rule: expression estimation
 rule expression:
     input:
-        rules.download.output
+        rules.download_SE.output,
+        rules.download_PE.output
     output:
-        tmp + 'expression/{sample}'
+        tmp + 'expression/{sample}/{sample}.quant.sf'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
@@ -106,7 +133,8 @@ rule expression:
 # Rule: first-pass alignment
 rule align_pass1:
     input:
-        rules.download.output
+        rules.download_SE.output,
+        rules.download_PE.output
     output:
         tmp + 'junctions/{sample}.junctions.tsv'
     params:
@@ -123,7 +151,6 @@ rule align_pass1:
             $(dirname {output}) \
             {wildcards.sample} \
             {params.layout} \
-            {params.group} \
             {config[STAR_REF]} \
                &> {log}
         """
@@ -131,7 +158,7 @@ rule align_pass1:
 # Rule: second-pass alignment
 rule align_pass2:
     input:
-        fastq = rules.download.output,
+        fastq = [rules.download_SE.output, rules.download_PE.output],
         junctions = rules.align_pass1.output
     output:
         tmp + 'alignment/{sample}.bam.tmp'
@@ -158,14 +185,14 @@ rule align_pass2:
 # Rule: fastq cleanup
 rule fastq_cleanup:
     input:
-        expression = tmp + 'expression/{sample}',
+        expression = tmp + 'expression/{sample}/{sample}.quant.sf',
         alignment = tmp + 'alignment/{sample}.bam.tmp'
     output:
-        expression = base + 'expression/{sample}',
+        expression = base + 'expression/{sample}/{sample}.quant.sf',
         alignment = tmp + 'alignment/{sample}.bam'
     shell:
         """
-        mv {input.expression} {output.expression}
+        mv $(dirname {input.expression}) $(dirname {output.expression})
         mv {input.alignment} {output.alignment}
         FASTQDIR="{tmp}/data/{wildcards.study}/{wildcards.group}/"
         FASTQDIR+="fastq/{wildcards.sample}"

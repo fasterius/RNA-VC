@@ -1,6 +1,6 @@
 __default__:
     account: 'b2014056'
-    time: '02:00:00'
+    time: '05:00:00'
     partition: 'core'
     ntasks: 1
     log: '{rule}.{log}'
@@ -19,11 +19,11 @@ align_pass2:
     ntasks: 16
 
 fastq_cleanup:
-    time: '00:01:00'
+    time: '00:05:00'
 
 variant_calling:
-    time: '48:00:00'
+    time: '2-00:00:00'
 
 alignment_cleanup:
-    time: '00:01:00'
+    time: '00:05:00'
     mail_type: 'FAIL,END'
