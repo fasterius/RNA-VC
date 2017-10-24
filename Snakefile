@@ -183,7 +183,7 @@ else:
             finished + 'expression/{sample}/{sample}.quant.sf',
         shell:
             """
-            mv $(dirname {input.expression})/* $(dirname {output.expression})
+            mv $(dirname {input.expression})/* $(dirname {output})
             rm -r $(dirname {input.fastq})
             """
     
