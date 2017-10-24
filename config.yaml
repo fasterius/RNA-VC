@@ -5,10 +5,19 @@ group_col: "cell_line"
 sample_col: "SRR"
 layout_col: "LibraryLayout"
 
-# Software and references
+# Should variant calling be performed?
+perform_variant_calling: True
+
+# Default layout to process: single-end reads
+LAYOUT: "SINGLE"
+
+# References and indexes
 GEN_REF: "/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/WholeGenomeFasta/genome.fa"
 SALMON_REF: "/proj/b2014056/indexes/Homo_sapiens.GRCh38.combined.cdna.ncrna.salmon.idx"
 STAR_REF: "/sw/data/uppnex/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/STARIndex/"
+
+# Software and parameters
+STAR_THREADS: 8
 SRA_CACHE: "/proj/b2014056/ncbi/sra/"
 PICARD: "/sw/apps/bioinfo/picard/2.0.1/milou/"
 GATK: "/sw/apps/bioinfo/GATK/3.7/"
