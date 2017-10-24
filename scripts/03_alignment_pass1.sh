@@ -25,9 +25,6 @@ elif [ "$LAYOUT" == "SINGLE" ]; then
 
 fi
 
-# Load modules
-module load bioinfo-tools star/2.5.3a samtools/1.5
-
 # First pass alignment
 star --genomeDir $STAR_REF \
     --readFilesIn $FASTQ1 $FASTQ2 \

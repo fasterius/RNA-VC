@@ -26,9 +26,6 @@ elif [ "$LAYOUT" == "SINGLE" ]; then
     FASTQ2=""
 fi
 
-# Load modules
-module load bioinfo-tools star/2.5.3a samtools/1.5
-
 # Collect junctions
 JUNCTIONS=$(find $JUNCDIR -name "*junctions.tsv" | xargs)
 

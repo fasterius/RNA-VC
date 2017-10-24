@@ -14,14 +14,6 @@ GATK=$7
 KNOWNSNPS=$8
 KNOWNINDELS=$9
 
-# Load modules
-module load \
-    bioinfo-tools \
-    picard/2.10.3 \
-    GATK/3.8-0 \
-    samtools/1.5 \
-    snpEff/4.2
-
 # Create subdirectories
 REALIGN=$VARIANTDIR/indel_realignment
 BQSR=$VARIANTDIR/bqsr

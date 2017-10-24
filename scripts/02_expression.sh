@@ -24,9 +24,6 @@ elif [ "$LAYOUT" == "SINGLE" ]; then
 
 fi
 
-# Load modules
-module load bioinfo-tools Salmon/0.8.2
-
 # Run Salmon
 salmon quant \
     --index $REF \
