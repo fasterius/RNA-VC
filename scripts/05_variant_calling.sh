@@ -23,9 +23,9 @@ module load \
     snpEff/4.2
 
 # Create subdirectories
-REALIGN=$ALIGNDIR/indel_realignment
-BQSR=$ALIGNDIR/bqsr
-CALLS=$ALIGNDIR/variant_calls
+REALIGN=$VARIANTDIR/indel_realignment
+BQSR=$VARIANTDIR/bqsr
+CALLS=$VARIANTDIR/variant_calls
 mkdir -p $REALIGN $BQSR $CALLS
 
 # Mark duplicates
@@ -35,9 +35,6 @@ java -Xmx7G -jar $PICARD/picard.jar MarkDuplicates \
 	CREATE_INDEX=true \
 	VALIDATION_STRINGENCY=SILENT \
 	METRICS_FILE=$REALIGN/dedup.metrics.${SAMPLE}.txt
-
-# # Remove intermediate files
-# rm $ALIGNDIR/*.bam
 
 # Index intermediate bam file
 samtools index $REALIGN/${SAMPLE}.dedupped.bam

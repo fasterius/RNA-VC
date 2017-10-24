@@ -8,6 +8,7 @@ SAMPLE=$4
 LAYOUT=$5
 GROUP=$6
 STAR_REF=$7
+THREADS=$8
 
 # Create directory for second pass alignment
 PASS2=$ALIGNDIR/pass2
@@ -35,17 +36,14 @@ JUNCTIONS=$(find $JUNCDIR -name "*junctions.tsv" | xargs)
 star --genomeDir $STAR_REF \
     --readFilesIn $FASTQ1 $FASTQ2 \
     --readFilesCommand zcat \
-    --runThreadN 16 \
+    --runThreadN $THREADS \
     --outSAMattrRGline ID:$SAMPLE LB:$SAMPLE PL:Illumina SM:$SAMPLE \
     --outSAMtype BAM SortedByCoordinate \
     --sjdbFileChrStartEnd $JUNCTIONS \
     --outFileNamePrefix $PASS2/
 
 # Move alignment file
-mv $PASS2/Aligned.out.bam > $ALIGNDIR/${SAMPLE}.bam
+mv $PASS2/Aligned.sortedByCoord.out.bam $ALIGNDIR/${SAMPLE}.bam
 
 # Remove temporary files
 rm -r $PASS2
-
-# # Move log file
-# cat $ALIGNDIR/pass2/Log.out > $ALIGNDIR/log.alignment.pass2.$SAMPLE.txt

@@ -22,6 +22,7 @@ module load bioinfo-tools sratools/2.8.0
 
 # Download FASTQ files
 fastq-dump \
+    -X 100000 \
     --outdir $FASTQDIR \
     --gzip \
     --skip-technical \

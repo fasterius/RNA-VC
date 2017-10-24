@@ -6,6 +6,7 @@ JUNCDIR=$2
 SAMPLE=$3
 LAYOUT=$4
 STAR_REF=$5
+THREADS=$6
 
 # Create directory for first pass alignment
 PASS1=${FASTQDIR/fastq/alignment}
@@ -31,15 +32,12 @@ module load bioinfo-tools star/2.5.3a samtools/1.5
 star --genomeDir $STAR_REF \
     --readFilesIn $FASTQ1 $FASTQ2 \
     --readFilesCommand zcat \
-    --runThreadN 16 \
+    --runThreadN $THREADS \
     --outFileNamePrefix $PASS1/ \
     --outSAMmode None
 
 # Move junctions
 mv $PASS1/SJ.out.tab $JUNCDIR/${SAMPLE}.junctions.tsv
 
-# # Remove temporary files
-# rm -r $PASS1
-
-# # Move log file
-# cat $JUNCDIR/pass1/Log.out > $JUNCDIR/log.alignment.pass1.$SAMPLE.txt
+# Remove temporary files
+rm -r $PASS1

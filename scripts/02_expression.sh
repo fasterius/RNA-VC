@@ -10,15 +10,17 @@ REF=$5
 # Specify options based on read layout
 if [ "$LAYOUT" == "PAIRED" ]; then
 
-    FASTQ1=$FASTQDIR/${SAMPLE}_1.fastq.gz
-    FASTQ2=${FASTQ1/_1.fastq.gz/_2.fastq.gz}
-    READS="-1$FASTQ1 -2$FASTQ2"
+    FASTQ1=$FASTQDIR/${SAMPLE}.fastq_1.gz
+    FASTQ2=${FASTQ1/.fastq_1.gz/.fastq_2.gz}
+    READS1="--mates1 $FASTQ1"
+    READS2="--mates2 $FASTQ2"
 
 elif [ "$LAYOUT" == "SINGLE" ]; then
 
     FASTQ1=$FASTQDIR/${SAMPLE}.fastq.gz
     FASTQ2=""
-    READS="-r$FASTQ1"
+    READS1="--unmatedReads $FASTQ1"
+    READS2=""
 
 fi
 
@@ -31,4 +33,7 @@ salmon quant \
     --output $EXPRDIR \
     --gcBias \
     --libType A \
-    "$READS"
+    $READS1 $READS2
+
+# Rename quantification file
+mv $EXPRDIR/quant.sf $EXPRDIR/${SAMPLE}.quant.sf
