@@ -10,20 +10,26 @@ __default__:
 download:
     time: '10:00:00'
 
-align_pass1:
-    partition: 'node'
+# Rules for expression-only workflow (excluding variant calling)
+finalise_expression:
+    time: '00:05:00'
+    mail_type: 'FAIL,END'
+
+# Rules for full workflow (including variant calling)
+alignment_pass1:
+    partition: 'core'
     ntasks: 8
 
-align_pass2:
-    partition: 'node'
+alignment_pass2:
+    partition: 'core'
     ntasks: 8
 
-fastq_cleanup:
+finalise_alignment:
     time: '00:05:00'
 
 variant_calling:
-    time: '3-00:00:00'
+    time: '2-00:00:00'
 
-alignment_cleanup:
+finalise_variant_calling:
     time: '00:05:00'
     mail_type: 'FAIL,END'
