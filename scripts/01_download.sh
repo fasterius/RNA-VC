@@ -19,7 +19,6 @@ fi
 
 # Download FASTQ files
 fastq-dump \
-    -X 100000 \
     --outdir $FASTQDIR \
     --gzip \
     --skip-technical \
@@ -28,13 +27,6 @@ fastq-dump \
     "$SPLIT" \
     -v \
     $SAMPLE
-
-# Rename paired-end read file names (if applicable)
-if [ "$LAYOUT" == "PAIRED" ]; then
-
-    mv $FASTQDIR/${SAMPLE}_1.fastq.gz $FASTQDIR/${SAMPLE}.fastq_1.gz
-    mv $FASTQDIR/${SAMPLE}_2.fastq.gz $FASTQDIR/${SAMPLE}.fastq_2.gz
-fi
 
 # Delete SRA file (if it exists)
 if [ -f $CACHEDIR/${SAMPLE}.sra ]; then

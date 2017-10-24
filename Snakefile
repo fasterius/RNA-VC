@@ -27,7 +27,7 @@ SAMPLES = metadata.loc[metadata[layout_col] == LAYOUT][sample_col]
 if LAYOUT == "SINGLE":
     fastq_type = ".fastq.gz"
 else:
-    fastq_type = ".fastq_1.gz"
+    fastq_type = "_1.fastq.gz"
 
 # Function for fetching specified metadata from a sample
 def get_metadata(sample, column):

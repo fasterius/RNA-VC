@@ -15,8 +15,8 @@ mkdir -p $PASS1
 # Get read layout and FASTQ input files
 if [ "$LAYOUT" == "PAIRED" ]; then
 
-    FASTQ1=$FASTQDIR/${SAMPLE}.fastq_1.gz
-    FASTQ2=${FASTQ1/.fastq_1.gz/.fastq_2.gz}
+    FASTQ1=$FASTQDIR/${SAMPLE}_1.fastq.gz
+    FASTQ2=${FASTQ1/_1.fastq.gz/_2.fastq.gz}
 
 elif [ "$LAYOUT" == "SINGLE" ]; then
 

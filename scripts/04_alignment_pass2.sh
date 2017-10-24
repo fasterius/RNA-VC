@@ -40,7 +40,7 @@ star --genomeDir $STAR_REF \
     --outFileNamePrefix $PASS2/
 
 # Move alignment file
-mv $PASS2/Aligned.sortedByCoord.out.bam $ALIGNDIR/${SAMPLE}.bam
+mv $PASS2/Aligned.sortedByCoord.out.bam $ALIGNDIR/${SAMPLE}.bam.tmp
 
 # Remove temporary files
 rm -r $PASS2
