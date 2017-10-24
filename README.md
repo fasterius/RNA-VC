@@ -4,7 +4,7 @@
 ## Overview
 
 **RNA-VC** is a pipeline that can analyse any RNA sequencing (RNA-seq) raw data
-available in the *Gene Expression Omnibus* ([GEO][geo-link]), yielding both
+available in the *Gene Expression Omnibus* ([GEO][geo]), yielding both
 variant calling data and gene/transcript expression data. It can also be run
 without the variant calling, if you are only interested in expression data.
 It is written with a combination of `bash` and `python`, all wrapped up in the
@@ -80,6 +80,7 @@ information, please see the `LICENCE` file.
 
 [badge]: https://img.shields.io/badge/license-mit-blue.svg
 [licence]: https://opensource.org/licenses/mit
+[geo]: https://www.ncbi.nlm.nih.gov/geo/
 [python]: https://www.python.org/
 [snakemake]: https://snakemake.readthedocs.io/en/stable/
 [sratools]: https://www.ncbi.nlm.nih.gov/sra/docs/toolkitsoft/
