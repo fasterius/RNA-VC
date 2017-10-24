@@ -8,6 +8,9 @@
 !README.md
 !LICENCE
 
+# Except the snakefile
+!Snakefile
+
 # Except scripts
 !scripts
 
