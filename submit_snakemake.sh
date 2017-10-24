@@ -26,5 +26,7 @@ for CURRENT_LAYOUT in SINGLE PAIRED; do
                       --partition {cluster.partition} \
                       --ntasks {cluster.ntasks} \
                       --mail-type {cluster.mail_type} \
-                      --job-name {cluster.job_name}"
+                      --job-name {cluster.job_name} \
+                      --output=/dev/null \
+                      --error=/dev/null"
 done
