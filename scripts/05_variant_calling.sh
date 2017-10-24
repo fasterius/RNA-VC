@@ -4,33 +4,29 @@
 GVCF="no"
 
 # Input parameters 
-WORKDIR=$1
-SAMPLE=$2
-GROUP=$3
-REF=$4
-PICARD=$5
-GATK=$6
-KNOWNSNPS=$7
-KNOWNINDELS=$8
+ALIGNDIR=$1
+VARIANTDIR=$2
+SAMPLE=$3
+GROUP=$4
+REF=$5
+PICARD=$6
+GATK=$7
+KNOWNSNPS=$8
+KNOWNINDELS=$9
 
-# Load modules
-module load \
-    bioinfo-tools \
-    picard/2.10.3 \
-    GATK/3.8-0 \
-    samtools/1.5 \
-    snpEff/4.2
+# Create subdirectories
+REALIGN=$VARIANTDIR/indel_realignment
+BQSR=$VARIANTDIR/bqsr
+CALLS=$VARIANTDIR/variant_calls
+mkdir -p $REALIGN $BQSR $CALLS
 
 # Mark duplicates
 java -Xmx7G -jar $PICARD/picard.jar MarkDuplicates \
-	INPUT=$ALIGNMENT/${SAMPLE}.bam \
+	INPUT=$ALIGNDIR/${SAMPLE}.bam \
 	OUTPUT=$REALIGN/${SAMPLE}.dedupped.bam  \
 	CREATE_INDEX=true \
 	VALIDATION_STRINGENCY=SILENT \
 	METRICS_FILE=$REALIGN/dedup.metrics.${SAMPLE}.txt
-
-# # Remove intermediate files
-# rm $ALIGNMENT/*.bam
 
 # Index intermediate bam file
 samtools index $REALIGN/${SAMPLE}.dedupped.bam
@@ -123,7 +119,7 @@ if [ "$GVCF" == "yes" ]; then
         -dontUseSoftClippedBases \
         -stand_call_conf 20.0 \
         -emitRefConfidence GVCF \
-        -o $WORKDIR/${SAMPLE}.gvcf
+        -o $VARIANTDIR/${SAMPLE}.gvcf
 fi
 
 # Remove intermediate files
@@ -178,7 +174,7 @@ java -Xmx7G -jar $SNPEFF/snpEff.jar $SNPEFFASSEMBLY \
 
 java -Xmx7G -jar $SNPEFF/SnpSift.jar annotate -id $KNOWNSNPS \
     $CALLS/${SAMPLE}.all.calls.filtered.annotated.vcf \
-    	> $WORKDIR/${SAMPLE}.vcf
+    	> $VARIANTDIR/${SAMPLE}.vcf
 
 # Remove intermediate files
 rm -r $CALLS

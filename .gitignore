@@ -1,3 +1,19 @@
-*.un~
-.snakemake
-data
+# Ignore everything
+*
+
+# Except .gitignore
+!.gitignore
+
+# Except README.md and LICENCE
+!README.md
+!LICENCE
+
+# Except scripts
+!scripts
+
+# Except configuration files
+!config.yaml
+!cluster.yaml
+
+# Except the wrapper script
+!submit_snakemake.sh

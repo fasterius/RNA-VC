@@ -1,41 +1,36 @@
 #!/bin/bash -l
 
 # Get input parameters
-WORKDIR=$1
-SAMPLE=$2
-LAYOUT=$3
-REF=$4
+FASTQDIR=$1
+EXPRDIR=$2
+SAMPLE=$3
+LAYOUT=$4
+REF=$5
 
-# Get directory for fastq-files
-FASTQDIR=$(echo "$WORKDIR" | sed 's/expression/fastq/g')
-
-echo $FASTQDIR
-echo $WORKDIR
-echo $SAMPLE
-echo $LAYOUT
-echo $REF
-touch $WORKDIR/${SAMPLE}.abundance.tsv
-exit 0
-
-# Estimate transcript expression with Kallisto
+# Specify options based on read layout
 if [ "$LAYOUT" == "PAIRED" ]; then
+
     FASTQ1=$FASTQDIR/${SAMPLE}_1.fastq.gz
     FASTQ2=${FASTQ1/_1.fastq.gz/_2.fastq.gz}
+    READS1="--mates1 $FASTQ1"
+    READS2="--mates2 $FASTQ2"
+
 elif [ "$LAYOUT" == "SINGLE" ]; then
+
     FASTQ1=$FASTQDIR/${SAMPLE}.fastq.gz
     FASTQ2=""
-else
-    echo "Invalid read layout $LAYOUT; aborting."
-    exit 1
+    READS1="--unmatedReads $FASTQ1"
+    READS2=""
+
 fi
 
-# Load modules
-module load bioinfo-tools kallisto/0.43.1
+# Run Salmon
+salmon quant \
+    --index $REF \
+    --output $EXPRDIR \
+    --gcBias \
+    --libType A \
+    $READS1 $READS2
 
-# Run Kallisto
-kallisto quant \
-    -i $REF \
-    -t 1 \
-    -b 0 \
-    -o $EXPRDIR \
-    $FASTQ1 $FASTQ2
+# Rename quantification file
+mv $EXPRDIR/quant.sf $EXPRDIR/${SAMPLE}.quant.sf
