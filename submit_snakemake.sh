@@ -5,7 +5,7 @@ for CURRENT_LAYOUT in SINGLE PAIRED; do
 
     # Run snakemake
     snakemake \
-        --snakefile snakefile \
+        --snakefile Snakefile \
         --config LAYOUT=$CURRENT_LAYOUT \
         --jobs 20 \
         --keep-going \
