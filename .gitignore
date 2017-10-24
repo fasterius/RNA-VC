@@ -4,6 +4,10 @@
 # Except .gitignore
 !.gitignore
 
+# Except README.md and LICENCE
+!README.md
+!LICENCE
+
 # Except scripts
 !scripts
 
