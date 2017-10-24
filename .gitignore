@@ -14,9 +14,9 @@
 # Except scripts
 !scripts
 
-# Except configuration files
+# Except example configuration files
 !example_config.yaml
-!cluster.yaml
+!example_cluster.yaml
 
 # Except the wrapper script
 !submit_snakemake.sh

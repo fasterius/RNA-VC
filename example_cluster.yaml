@@ -1,5 +1,10 @@
+## This is an example of a SLURM cluster config file. It contains all the
+## parameters that RNA-VC needs, and each rule can be changed according to your
+## needs. The default settings listed here are meant to cover most use-cases
+## and is what seems to work for most GEO data.
+
 __default__:
-    account: 'b2014056'
+    account: '<account.name>'
     time: '05:00:00'
     partition: 'core'
     ntasks: 1
