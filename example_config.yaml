@@ -1,0 +1,31 @@
+## This is an example config file; you will need to fil it out with paths and
+## directories of your own files, software and settings accordingly, but it
+## lists all the needed parameters for you.
+
+# Metadata
+metadata: "metadata.txt"
+study_col: "GSE"
+sample_col: "SRR"
+group_col: "Group"
+layout_col: "Layout"
+
+# Should variant calling be performed?
+perform_variant_calling: True
+
+# Default layout to process: single-end reads
+LAYOUT: "SINGLE"
+
+# References and indexes
+GEN_REF: "GRCh38/WholeGenomeFasta/genome.fa"
+SALMON_REF: "Homo_sapiens.GRCh38.combined.cdna.ncrna.salmon.idx"
+STAR_REF: "GRCh38/Sequence/STARIndex/"
+
+# Software and parameters
+STAR_THREADS: 8
+SRA_CACHE: "ncbi/sra/"
+PICARD: "bioinfo/picard"
+GATK: "bioinfo/GATK/"
+SNPEFF: "bioinfo/snpEff/"
+KNOWNSNPS: "ftp.broadinstitute.org/bundle/hg38bundle/dbsnp_144.hg38.vcf.gz"
+KNOWNINDELS: "ftp.broadinstitute.org/bundle/hg38bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+SNPEFFASSEMBLY: "GRCh38.82"

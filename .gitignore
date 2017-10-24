@@ -15,7 +15,7 @@
 !scripts
 
 # Except configuration files
-!config.yaml
+!example_config.yaml
 !cluster.yaml
 
 # Except the wrapper script
