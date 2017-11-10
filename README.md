@@ -27,13 +27,13 @@ There are a number of bioinformatic software packages that need to be installed
 in order to run the pipeline:
 
  * [Python 3][python] and [Snakemake][snakemake] for running the pipeline
- * [SRAtools][sratools] for downloading raw fastq files
- * [Salmon][salmon] for estimating expression level
+ * [SRAtools][sratools] for downloading raw FASTQ files
+ * [Salmon][salmon] for estimating expression levels
  * [STAR][star] for aligning the reads
  * [SAMtools][samtools] for working with the resulting alignment files
- * [PICARD][picard] for marking read duplicates
+ * [PICARD][picard] for marking duplicate reads
  * [GATK][gatk] for performing variant calling
- * [snpEFF][snpeff] for annotating resulting variants
+ * [snpEFF][snpeff] for annotating the resulting variants
 
 You must have all of these installed if you are to run the pipeline (if you are
 using a computer cluster they might already be installed, if you're lucky).
