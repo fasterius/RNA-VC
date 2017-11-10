@@ -2,17 +2,16 @@
 
 # Get input parameters
 FASTQDIR=$1
-JUNCDIR=$2
-ALIGNDIR=$3
-SAMPLE=$4
-LAYOUT=$5
-GROUP=$6
-STAR_REF=$7
-THREADS=$8
+ALIGNDIR=$2
+SAMPLE=$3
+LAYOUT=$4
+STAR_REF=$5
+THREADS=$6
+LOGFILE=$7
 
 # Create directory for second pass alignment
-PASS2=$ALIGNDIR/pass2
-mkdir -p $PASS2
+TEMP=$ALIGNDIR/temp
+mkdir -p $TEMP
 
 # Get read layout and FASTQ input files
 if [ "$LAYOUT" == "PAIRED" ]; then
@@ -26,21 +25,25 @@ elif [ "$LAYOUT" == "SINGLE" ]; then
     FASTQ2=""
 fi
 
-# Collect junctions
-JUNCTIONS=$(find $JUNCDIR -name "*junctions.tsv" | xargs)
-
-# Second pass alignment
+# Perform alignment
 star --genomeDir $STAR_REF \
     --readFilesIn $FASTQ1 $FASTQ2 \
     --readFilesCommand zcat \
     --runThreadN $THREADS \
     --outSAMattrRGline ID:$SAMPLE LB:$SAMPLE PL:Illumina SM:$SAMPLE \
     --outSAMtype BAM SortedByCoordinate \
-    --sjdbFileChrStartEnd $JUNCTIONS \
-    --outFileNamePrefix $PASS2/
+    --twopassMode Basic \
+    --outFileNamePrefix $TEMP/
 
 # Move alignment file
-mv $PASS2/Aligned.sortedByCoord.out.bam $ALIGNDIR/${SAMPLE}.bam.tmp
+mv $TEMP/Aligned.sortedByCoord.out.bam $ALIGNDIR/${SAMPLE}.bam
+
+# Append logs
+cat $TEMP/Log.out >> $LOGFILE
+cat $TEMP/Log.final.out >> $LOGFILE
 
 # Remove temporary files
-rm -r $PASS2
+rm -r $TEMP
+
+# Remove FASTQ-files
+rm -r $FASTQDIR
