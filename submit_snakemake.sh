@@ -14,6 +14,7 @@ module load bioinfo-tools \
 for CURRENT_LAYOUT in SINGLE PAIRED; do
 
     # Run snakemake
+    echo "Processing series with ${CURRENT_LAYOUT}-END reads"
     snakemake \
         --snakefile Snakefile \
         --config LAYOUT=$CURRENT_LAYOUT \
@@ -30,3 +31,6 @@ for CURRENT_LAYOUT in SINGLE PAIRED; do
                       --output=/dev/null \
                       --error=/dev/null"
 done
+
+# Send notification mail
+echo "" | mail -s "Snakemake finished." erikfas@kth.se
