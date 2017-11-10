@@ -5,7 +5,6 @@
 
 __default__:
     account: '<account.name>'
-    time: '05:00:00'
     partition: 'core'
     ntasks: 1
     log: '{rule}.{log}'
@@ -15,26 +14,9 @@ __default__:
 download:
     time: '10:00:00'
 
-# Rules for expression-only workflow (excluding variant calling)
-finalise_expression:
-    time: '00:05:00'
-    mail_type: 'FAIL,END'
-
-# Rules for full workflow (including variant calling)
-alignment_pass1:
-    partition: 'core'
+alignment:
+    time: '05:00:00'
     ntasks: 8
-
-alignment_pass2:
-    partition: 'core'
-    ntasks: 8
-
-finalise_alignment:
-    time: '00:05:00'
 
 variant_calling:
     time: '2-00:00:00'
-
-finalise_variant_calling:
-    time: '00:05:00'
-    mail_type: 'FAIL,END'

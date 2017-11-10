@@ -6,8 +6,7 @@
 metadata: "metadata.txt"
 study_col: "GSE"
 sample_col: "SRR"
-group_col: "Group"
-layout_col: "Layout"
+layout_col: "LibraryLayout"
 
 # Should variant calling be performed?
 perform_variant_calling: True
