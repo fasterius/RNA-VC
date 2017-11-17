@@ -1,5 +1,9 @@
 #!/bin/bash -l
 
+# Bash strict mode
+set -euo pipefail
+IFS=$'\n\t'
+
 # Input parameters 
 ALIGNDIR=$1
 VARIANTDIR=$2
