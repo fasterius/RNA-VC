@@ -60,6 +60,7 @@ rule clean:
 
 # Rule: download raw data
 rule download:
+    priority: 1
     output:
         fastq = tempdir + 'fastq/{sample}/{sample}' + fastq_type,
         expression = outdir + 'expression/{sample}/{sample}.quant.sf'
@@ -82,6 +83,7 @@ rule download:
 
 # Rule: alignment
 rule alignment:
+    priority: 2
     input:
         rules.download.output.fastq
     output:
@@ -106,6 +108,7 @@ rule alignment:
 
 # Rule: variant calling
 rule variant_calling:
+    priority: 3
     input:
         rules.alignment.output
     output:
