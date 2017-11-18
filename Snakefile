@@ -41,7 +41,7 @@ if config["perform_variant_calling"]:
         input:
             expand(outdir + 'expression/{sample}/{sample}.quant.sf', zip,
                 study = STUDIES, sample = SAMPLES),
-            expand(outdir + 'variants/{sample}.vcf.gz', zip,
+            expand(outdir + 'variants/{sample}/{sample}.vcf.gz', zip,
                 study = STUDIES, sample = SAMPLES)
         shell:
             "rm -r {tempdir}"
@@ -112,7 +112,7 @@ rule variant_calling:
     input:
         rules.alignment.output
     output:
-        outdir + 'variants/{sample}.vcf.gz'
+        outdir + 'variants/{sample}/{sample}.vcf.gz'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
