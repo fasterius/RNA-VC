@@ -159,10 +159,14 @@ java -Xmx7G -cp $GATK/GenomeAnalysisTK.jar \
 # Remove intermediate files
 rm $CALLS/${SAMPLE}.variants.filtered.vcf $CALLS/${SAMPLE}.nonvariants.vcf
 
+# Change chrM to chrMT
+cat $CALLS/${SAMPLE}.all.calls.filtered.vcf | sed 's/^chrM/chrMT/' \
+    > $CALLS/${SAMPLE}.renamed.vcf
+
 # Variant annotation
 java -Xmx7G -jar $SNPEFF/snpEff.jar $SNPEFFASSEMBLY \
     -stats $CALLS/snpEff.stats.${SAMPLE}.html \
-    $CALLS/${SAMPLE}.all.calls.filtered.vcf \
+    $CALLS/${SAMPLE}.renamed.vcf \
 	    > $CALLS/${SAMPLE}.all.calls.filtered.annotated.vcf
 
 java -Xmx7G -jar $SNPEFF/SnpSift.jar annotate -id $KNOWNSNPS \
