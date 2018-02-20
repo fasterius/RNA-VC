@@ -23,7 +23,7 @@ CALLS=$VARIANTDIR/variant_calls
 mkdir -p $REALIGN $BQSR $CALLS
 
 # Mark duplicates
-java -Xmx7G -jar $PICARD/picard.jar MarkDuplicates \
+java -Xmx5G -jar $PICARD/picard.jar MarkDuplicates \
     INPUT=$ALIGNDIR/${SAMPLE}.bam \
     OUTPUT=$REALIGN/${SAMPLE}.dedupped.bam  \
     CREATE_INDEX=true \
@@ -37,7 +37,7 @@ rm -r $ALIGNDIR
 samtools index $REALIGN/${SAMPLE}.dedupped.bam
 
 # Split'N'Trim and reassign mapping qualities
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T SplitNCigarReads \
     -R $REF \
     -I $REALIGN/${SAMPLE}.dedupped.bam \
@@ -51,14 +51,14 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 rm $REALIGN/${SAMPLE}.dedupped.bam*
 
 # Indel realignment
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T RealignerTargetCreator \
     -R $REF \
     -I $REALIGN/${SAMPLE}.dedupped.split.bam \
     -known $KNOWNINDELS \
     -o $REALIGN/realignment_targets.list
 
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T IndelRealigner \
     -R $REF \
     -I $REALIGN/${SAMPLE}.dedupped.split.bam \
@@ -76,7 +76,7 @@ samtools index $BQSR/${SAMPLE}.realigned_indels.bam
 rm -r $REALIGN
 
 # First pass covariation modelling (BQSR)
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T BaseRecalibrator \
     -R $REF \
     -I $BQSR/${SAMPLE}.realigned_indels.bam \
@@ -85,7 +85,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
     -o $BQSR/${SAMPLE}.recal.data.table.txt
 
 # Second pass covariation modelling (BQSR)
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T BaseRecalibrator \
     -R $REF \
     -I $BQSR/${SAMPLE}.realigned_indels.bam \
@@ -95,7 +95,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
     -o $BQSR/${SAMPLE}.post.recal.data.table.txt
 
 # Apply recalibration (BQSR)
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T PrintReads \
     -R $REF \
     -I $BQSR/${SAMPLE}.realigned_indels.bam \
@@ -106,7 +106,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 rm $BQSR/${SAMPLE}.realigned_indels.bam*
 
 # Variant calling
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T HaplotypeCaller \
     -R $REF \
     -I $BQSR/${SAMPLE}.recal.reads.bam \
@@ -119,14 +119,14 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 rm -r $BQSR
 
 # Separate variants and non-variants for VariantFiltration
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T SelectVariants \
     -R $REF \
     --variant $CALLS/${SAMPLE}.all.calls.vcf \
     --selectTypeToExclude NO_VARIATION \
     -o $CALLS/${SAMPLE}.variants.vcf
 
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T SelectVariants \
     -R $REF \
     --variant $CALLS/${SAMPLE}.all.calls.vcf \
@@ -134,7 +134,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
     -o $CALLS/${SAMPLE}.nonvariants.vcf
 
 # Variant filtration
-java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -T VariantFiltration \
     -R $REF \
     -V $CALLS/${SAMPLE}.variants.vcf \
@@ -148,7 +148,7 @@ java -Xmx7G -jar $GATK/GenomeAnalysisTK.jar \
 rm $CALLS/${SAMPLE}.variants.vcf
 
 # Concatenate non-variants and filtered variants
-java -Xmx7G -cp $GATK/GenomeAnalysisTK.jar \
+java -Xmx5G -cp $GATK/GenomeAnalysisTK.jar \
     org.broadinstitute.gatk.tools.CatVariants \
     -R $REF \
     -V $CALLS/${SAMPLE}.variants.filtered.vcf \
@@ -164,12 +164,12 @@ cat $CALLS/${SAMPLE}.all.calls.filtered.vcf | sed 's/^chrM/chrMT/' \
     > $CALLS/${SAMPLE}.renamed.vcf
 
 # Variant annotation
-java -Xmx7G -jar $SNPEFF/snpEff.jar $SNPEFFASSEMBLY \
+java -Xmx5G -jar $SNPEFF/snpEff.jar $SNPEFFASSEMBLY \
     -stats $CALLS/snpEff.stats.${SAMPLE}.html \
     $CALLS/${SAMPLE}.renamed.vcf \
 	    > $CALLS/${SAMPLE}.all.calls.filtered.annotated.vcf
 
-java -Xmx7G -jar $SNPEFF/SnpSift.jar annotate -id $KNOWNSNPS \
+java -Xmx5G -jar $SNPEFF/SnpSift.jar annotate -id $KNOWNSNPS \
     $CALLS/${SAMPLE}.all.calls.filtered.annotated.vcf \
     	> $VARIANTDIR/${SAMPLE}.vcf
 
