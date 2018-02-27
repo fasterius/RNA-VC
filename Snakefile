@@ -183,6 +183,7 @@ if GROUPS == "":
                 {config[KNOWNINDELS]} \
                 {config[SNPEFF]} \
                 {config[SNPEFFASSEMBLY]} \
+                NO_MERGE \
                     &> {log}
             """
 else:
@@ -213,5 +214,6 @@ else:
                 {config[KNOWNINDELS]} \
                 {config[SNPEFF]} \
                 {config[SNPEFFASSEMBLY]} \
+                MERGE \
                     &> {log}
             """
