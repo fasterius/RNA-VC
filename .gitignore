@@ -1,5 +1,5 @@
 # Ignore everything
-*
+/*
 
 # Except .gitignore
 !.gitignore
@@ -20,3 +20,8 @@
 
 # Except the wrapper script
 !submit_snakemake.sh
+
+# Add specific extensions to ignore
+*.un~
+.DS_Store
+.snakemake
