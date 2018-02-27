@@ -21,11 +21,9 @@ STUDIES = metadata.loc[metadata[layout_col] == LAYOUT][study_col]
 SAMPLES = metadata.loc[metadata[layout_col] == LAYOUT][sample_col]
 
 # Set groups (if applicable)
-if config["GROUP"] != "":
+group_col = config["group_col"]
+if group_col != "" and group_col in metadata.columns:
 
-    # Get group column in metadata
-    group_col = config["group_col"]
-    
     # Initialise empty group dictionary
     GROUPS = {}
 
@@ -36,6 +34,12 @@ if config["GROUP"] != "":
     for group in unique_groups:
         current = metadata.loc[metadata[group_col] == group]
         GROUPS[group] = current[sample_col].tolist()
+
+elif group_col != "" and group_col not in metadata.columns:
+
+    # Raise error for missing column
+    raise ValueError(group_col + " column missing from metadata.")
+
 else:
 
     # Set groups variable to an empty string
