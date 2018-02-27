@@ -116,8 +116,7 @@ rule alignment:
     input:
         rules.download.output.fastq
     output:
-        tempdir + 'alignment/{sample}/{sample}.bam' if GROUPS == "" \
-            else tempdir + 'alignment/{group}/{sample}.bam'
+        tempdir + 'alignment/{sample}.bam'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
@@ -136,14 +135,37 @@ rule alignment:
                &> {log}
         """
 
+# Rule: indel realignment
+rule indel_realignment:
+    priority: 3
+    input:
+        rules.alignment.output
+    output:
+        tempdir + 'indel_realignment/{sample}/{sample}.bam' if GROUPS == "" \
+            else tempdir + 'indel_realignment/{group}/{sample}.bam'
+    log:
+        outdir + 'logs/{sample}.03_indel_realignment.log'
+    shell:
+        """
+        bash scripts/03_indel_realignment.sh \
+            $(dirname {input}) \
+            $(dirname {output}) \
+            {wildcards.sample} \
+            {config[GEN_REF]} \
+            {config[PICARD]} \
+            {config[GATK]} \
+            {config[KNOWNINDELS]} \
+                &> {log}
+        """
+
 # Rule: variant calling
 if GROUPS == "":
 
     # Group-less variant calling
     rule variant_calling:
-        priority: 3
+        priority: 4
         input:
-            rules.alignment.output
+            rules.indel_realignment.output
         output:
             outdir + 'variants/{sample}/{sample}.vcf.gz'
         log:
@@ -167,10 +189,10 @@ else:
 
     # Per-group variant calling
     rule variant_calling:
-        priority: 3
+        priority: 4
         input:
             lambda wildcards: \
-                expand(tempdir + "alignment/{group}/{sample}.bam",
+                expand(tempdir + "indel_realignment/{group}/{sample}.bam",
                        study = wildcards.study,
                        group = wildcards.group,
                        sample = GROUPS[wildcards.group])
