@@ -20,6 +20,27 @@ LAYOUT = config["LAYOUT"]
 STUDIES = metadata.loc[metadata[layout_col] == LAYOUT][study_col]
 SAMPLES = metadata.loc[metadata[layout_col] == LAYOUT][sample_col]
 
+# Set groups (if applicable)
+if config["GROUP"] != "":
+
+    # Get group column in metadata
+    group_col = config["group_col"]
+    
+    # Initialise empty group dictionary
+    GROUPS = {}
+
+    # Get unique groups
+    unique_groups = metadata[group_col].unique().tolist()
+
+    # Add group,[samples] key,[values] pairs to group dict
+    for group in unique_groups:
+        current = metadata.loc[metadata[group_col] == group]
+        GROUPS[group] = current[sample_col].tolist()
+else:
+
+    # Set groups variable to an empty string
+    GROUPS = ""
+
 # Function for fetching specified metadata from a sample
 def get_metadata(sample, column):
     result = metadata.loc[metadata[sample_col] == sample][column].values[0]
@@ -41,8 +62,12 @@ if config["perform_variant_calling"]:
         input:
             expand(outdir + 'expression/{sample}/{sample}.quant.sf', zip,
                 study = STUDIES, sample = SAMPLES),
-            expand(outdir + 'variants/{sample}/{sample}.vcf.gz', zip,
-                study = STUDIES, sample = SAMPLES)
+            (expand(outdir + 'variants/{sample}/{sample}.vcf.gz', zip,
+                study = STUDIES, sample = SAMPLES) if GROUPS == "" \
+            else \
+                expand(outdir + 'variants/{group}.vcf.gz', zip,
+                    study = STUDIES, group = list(GROUPS.keys())))
+            
         shell:
             "rm -r {tempdir}"
 else:
@@ -87,7 +112,8 @@ rule alignment:
     input:
         rules.download.output.fastq
     output:
-        tempdir + 'alignment/{sample}/{sample}.bam'
+        tempdir + 'alignment/{sample}/{sample}.bam' if GROUPS == "" \
+            else tempdir + 'alignment/{group}/{sample}.bam'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
@@ -107,29 +133,59 @@ rule alignment:
         """
 
 # Rule: variant calling
-rule variant_calling:
-    priority: 3
-    input:
-        rules.alignment.output
-    output:
-        outdir + 'variants/{sample}/{sample}.vcf.gz'
-    params:
-        layout = lambda wildcards:
-            get_metadata(wildcards.sample, layout_col),
-    log:
-        outdir + 'logs/{sample}.03_variant_calling.log'
-    shell:
-        """
-        bash scripts/03_variant_calling.sh \
-            $(dirname {input}) \
-            $(dirname {output}) \
-            {wildcards.sample} \
-            {config[GEN_REF]} \
-            {config[PICARD]} \
-            {config[GATK]} \
-            {config[KNOWNSNPS]} \
-            {config[KNOWNINDELS]} \
-            {config[SNPEFF]} \
-            {config[SNPEFFASSEMBLY]} \
-                &> {log}
-        """
+if GROUPS == "":
+
+    # Group-less variant calling
+    rule variant_calling:
+        priority: 3
+        input:
+            rules.alignment.output
+        output:
+            outdir + 'variants/{sample}/{sample}.vcf.gz'
+        log:
+            outdir + 'logs/{sample}.03_variant_calling.log'
+        shell:
+            """
+            bash scripts/03_variant_calling.sh \
+                $(dirname {input}) \
+                $(dirname {output}) \
+                {wildcards.sample} \
+                {config[GEN_REF]} \
+                {config[PICARD]} \
+                {config[GATK]} \
+                {config[KNOWNSNPS]} \
+                {config[KNOWNINDELS]} \
+                {config[SNPEFF]} \
+                {config[SNPEFFASSEMBLY]} \
+                    &> {log}
+            """
+else:
+
+    # Per-group variant calling
+    rule variant_calling:
+        priority: 3
+        input:
+            lambda wildcards: \
+                expand(tempdir + "alignment/{group}/{sample}.bam",
+                       study = wildcards.study,
+                       group = wildcards.group,
+                       sample = GROUPS[wildcards.group])
+        output:
+            outdir + 'variants/{group}.vcf.gz'
+        log:
+            outdir + 'logs/{group}.03_variant_calling.log'
+        shell:
+            """
+            bash scripts/03_variant_calling.sh \
+                $(dirname {input}) \
+                $(dirname {output}) \
+                {wildcards.group} \
+                {config[GEN_REF]} \
+                {config[PICARD]} \
+                {config[GATK]} \
+                {config[KNOWNSNPS]} \
+                {config[KNOWNINDELS]} \
+                {config[SNPEFF]} \
+                {config[SNPEFFASSEMBLY]} \
+                    &> {log}
+            """
