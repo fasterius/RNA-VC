@@ -5,7 +5,7 @@ FASTQDIR=$1
 EXPRDIR=$2
 SAMPLE=$3
 LAYOUT=$4
-REF=$5
+SALMON_REF=$5
 CACHEDIR=$6
 
 # Set paired/single-end read parameters
@@ -49,7 +49,7 @@ fi
 
 # Run Salmon
 salmon quant \
-    --index $REF \
+    --index $SALMON_REF \
     --output $EXPRDIR \
     --gcBias \
     --libType A \
