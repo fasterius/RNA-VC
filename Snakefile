@@ -71,16 +71,11 @@ if config["perform_variant_calling"]:
             else \
                 expand(outdir + 'variants/{group}.vcf.gz', zip,
                     study = STUDIES, group = list(GROUPS.keys())))
-            
-        shell:
-            "rm -r {tempdir}"
 else:
     rule all:
         input:
             expand(outdir + 'expression/{sample}/{sample}.quant.sf', zip,
                 study = STUDIES, sample = SAMPLES)
-        shell:
-            "rm -r {tempdir}"
 
 # Rule: clean
 rule clean:
