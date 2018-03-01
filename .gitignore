@@ -18,5 +18,5 @@
 !example_config.yaml
 !example_cluster.yaml
 
-# Except the wrapper script
-!submit_snakemake.sh
+# Except example cluster wrapper script
+!example_submit_snakemake.sh
