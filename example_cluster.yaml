@@ -7,16 +7,14 @@ __default__:
     account: '<account.name>'
     partition: 'core'
     ntasks: 1
+    time: '10:00:00'
     log: '{rule}.{log}'
     mail_type: 'FAIL'
     job_name: '{rule}.{wildcards.sample}'
-
-download:
-    time: '10:00:00'
-
 alignment:
     time: '05:00:00'
     ntasks: 8
 
 variant_calling:
-    time: '2-00:00:00'
+    time: '1-00:00:00'
+    job_name: '{rule}.{wildcards[1]}'

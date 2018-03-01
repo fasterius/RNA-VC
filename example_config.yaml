@@ -6,6 +6,7 @@
 metadata: "metadata.txt"
 study_col: "GSE"
 sample_col: "SRR"
+group_col: "group"
 layout_col: "LibraryLayout"
 
 # Should variant calling be performed?
