@@ -6,6 +6,7 @@ module load bioinfo-tools \
     Salmon/0.8.2 \
     star/2.5.3a \
     samtools/1.5 \
+    bamtools/2.3.0 \
     picard/2.10.3 \
     GATK/3.8-0 \
     snpEff/4.2
@@ -18,6 +19,7 @@ for CURRENT_LAYOUT in SINGLE PAIRED; do
     snakemake \
         --snakefile Snakefile \
         --config LAYOUT=$CURRENT_LAYOUT \
+        --config group_col="group" \
         --jobs 20 \
         --keep-going \
         --cluster-config cluster.yaml \
