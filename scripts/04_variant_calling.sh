@@ -17,21 +17,28 @@ SNPEFFASSEMBLY=$9
 MERGE=${10}
 
 # Create subdirectories
-BQSR=$VARIANTDIR/bqsr
-CALLS=$VARIANTDIR/variant_calls
+BQSR=$VARIANTDIR/$NAME/bqsr
+CALLS=$VARIANTDIR/$NAME/variant_calls
 mkdir -p $BQSR $CALLS
 
 # Check for groups and merge as applicable
 if [ "$MERGE" == "MERGE" ]; then
 
+    # List all BAM files in realignment directory
+    for BAM in $REALIGNDIR/*.bam; do
+        echo "$BAM" >> $BQSR/bam_list.txt
+    done
+
     # Merge and index indel realignment bam files
-    bamtools merge $(for BAM in $REALIGNDIR/*.bam; do echo -in $BAM; done) \
-        -out $BQSR/$NAME.merged.bam
+    bamtools merge -list $BQSR/bam_list.txt -out $BQSR/$NAME.merged.bam
     samtools index $BQSR/$NAME.merged.bam
 
     # Set input BAM
-    INPUT_BAM=$BQSR/$NAME.merged.bam
-else 
+    INPUT_BAM=$BQSR/${NAME}.merged.bam
+
+    # Remove BAM list
+    rm $BQSR/bam_list.txt
+else
 
     # Set input without merging groups
     INPUT_BAM=$REALIGNDIR/${NAME}.bam
@@ -66,7 +73,6 @@ java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
 
 # Remove intermediate files
 rm $REALIGNDIR/*.bam
-rm $BQSR/${NAME}.bam*
 
 # Variant calling
 java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
@@ -142,4 +148,4 @@ java -Xmx5G -jar $SNPEFF/SnpSift.jar annotate -id $KNOWNSNPS \
 gzip $VARIANTDIR/${NAME}.vcf
 
 # Remove intermediate files
-rm -r $CALLS
+rm -r $VARIANTDIR/$NAME
