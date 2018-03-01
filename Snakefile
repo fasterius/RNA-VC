@@ -155,6 +155,7 @@ rule indel_realignment:
             {config[PICARD]} \
             {config[GATK]} \
             {config[KNOWNINDELS]} \
+            {config[JAVAMEM]} \
                 &> {log}
         """
 
@@ -182,6 +183,7 @@ if GROUPS == "":
                 {config[KNOWNINDELS]} \
                 {config[SNPEFF]} \
                 {config[SNPEFFASSEMBLY]} \
+                {config[JAVAMEM]} \
                 NO_MERGE \
                     &> {log}
             """
@@ -212,6 +214,7 @@ else:
                 {config[KNOWNINDELS]} \
                 {config[SNPEFF]} \
                 {config[SNPEFFASSEMBLY]} \
+                {config[JAVAMEM]} \
                 MERGE \
                     &> {log}
             """

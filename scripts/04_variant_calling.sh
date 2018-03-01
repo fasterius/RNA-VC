@@ -14,7 +14,8 @@ KNOWNSNPS=$6
 KNOWNINDELS=$7
 SNPEFF=$8
 SNPEFFASSEMBLY=$9
-MERGE=${10}
+JAVEMEM="-Xmx${10}"
+MERGE=${11}
 
 # Create subdirectories
 BQSR=$VARIANTDIR/$NAME/bqsr
@@ -45,7 +46,7 @@ else
 fi
 
 # First pass covariation modelling (BQSR)
-java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
+java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
     -T BaseRecalibrator \
     -R $REF \
     -I $INPUT_BAM \
@@ -54,7 +55,7 @@ java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -o $BQSR/${NAME}.recal.data.table.txt
 
 # Second pass covariation modelling (BQSR)
-java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
+java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
     -T BaseRecalibrator \
     -R $REF \
     -I $INPUT_BAM \
@@ -64,7 +65,7 @@ java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -o $BQSR/${NAME}.post.recal.data.table.txt
 
 # Apply recalibration (BQSR)
-java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
+java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
     -T PrintReads \
     -R $REF \
     -I $INPUT_BAM \
@@ -75,7 +76,7 @@ java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
 rm $REALIGNDIR/*.bam
 
 # Variant calling
-java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
+java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
     -T HaplotypeCaller \
     -R $REF \
     -I $BQSR/${NAME}.recal.reads.bam \
@@ -88,14 +89,14 @@ java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
 rm -r $BQSR
 
 # Separate variants and non-variants for VariantFiltration
-java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
+java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
     -T SelectVariants \
     -R $REF \
     --variant $CALLS/${NAME}.all.calls.vcf \
     --selectTypeToExclude NO_VARIATION \
     -o $CALLS/${NAME}.variants.vcf
 
-java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
+java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
     -T SelectVariants \
     -R $REF \
     --variant $CALLS/${NAME}.all.calls.vcf \
@@ -103,7 +104,7 @@ java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
     -o $CALLS/${NAME}.nonvariants.vcf
 
 # Variant filtration
-java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
+java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
     -T VariantFiltration \
     -R $REF \
     -V $CALLS/${NAME}.variants.vcf \
@@ -117,7 +118,7 @@ java -Xmx5G -jar $GATK/GenomeAnalysisTK.jar \
 rm $CALLS/${NAME}.variants.vcf
 
 # Concatenate non-variants and filtered variants
-java -Xmx5G -cp $GATK/GenomeAnalysisTK.jar \
+java $JAVAMEM -cp $GATK/GenomeAnalysisTK.jar \
     org.broadinstitute.gatk.tools.CatVariants \
     -R $REF \
     -V $CALLS/${NAME}.variants.filtered.vcf \
@@ -134,13 +135,13 @@ cat $CALLS/${NAME}.all.calls.filtered.vcf | sed 's/^chrM/chrMT/' \
     > $CALLS/${NAME}.renamed.vcf
 
 # Variant annotation (snpEff)
-java -Xmx5G -jar $SNPEFF/snpEff.jar $SNPEFFASSEMBLY \
+java $JAVAMEM -jar $SNPEFF/snpEff.jar $SNPEFFASSEMBLY \
     -stats $CALLS/snpEff.stats.${NAME}.html \
     $CALLS/${NAME}.renamed.vcf \
 	    > $CALLS/${NAME}.all.calls.filtered.annotated.vcf
 
 # Variant annotation (SnpSift)
-java -Xmx5G -jar $SNPEFF/SnpSift.jar annotate -id $KNOWNSNPS \
+java $JAVAMEM -jar $SNPEFF/SnpSift.jar annotate -id $KNOWNSNPS \
     $CALLS/${NAME}.all.calls.filtered.annotated.vcf \
     	> $VARIANTDIR/${NAME}.vcf
 
