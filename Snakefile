@@ -172,12 +172,11 @@ if GROUPS == "":
             outdir + 'logs/{sample}.03_variant_calling.log'
         shell:
             """
-            bash scripts/03_variant_calling.sh \
+            bash scripts/04_variant_calling.sh \
                 $(dirname {input}) \
                 $(dirname {output}) \
                 {wildcards.sample} \
                 {config[GEN_REF]} \
-                {config[PICARD]} \
                 {config[GATK]} \
                 {config[KNOWNSNPS]} \
                 {config[KNOWNINDELS]} \
@@ -203,12 +202,11 @@ else:
             outdir + 'logs/{group}.03_variant_calling.log'
         shell:
             """
-            bash scripts/03_variant_calling.sh \
-                $(dirname {input}) \
+            bash scripts/04_variant_calling.sh \
+                $(dirname {input[0]}) \
                 $(dirname {output}) \
                 {wildcards.group} \
                 {config[GEN_REF]} \
-                {config[PICARD]} \
                 {config[GATK]} \
                 {config[KNOWNSNPS]} \
                 {config[KNOWNINDELS]} \
