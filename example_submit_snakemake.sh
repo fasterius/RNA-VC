@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Send e-mail on success/failure
+MAIL="john@doe.com"
+
 # Load modules
 module load bioinfo-tools \
     sratools/2.8.0 \
@@ -40,4 +43,4 @@ else
 fi
 
 # Send notification mail
-echo "" | mail -s "$MESSAGE" erikfas@kth.se
+echo "" | mail -s "$MESSAGE" "$MAIL"
