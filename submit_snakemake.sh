@@ -32,5 +32,12 @@ for CURRENT_LAYOUT in SINGLE PAIRED; do
                       --error=/dev/null"
 done
 
+# Check for success or failure
+if [ $? -eq 0 ]; then
+    MESSAGE="Snakemake finished."
+else
+    MESSAGE="Snakemake failed."
+fi
+
 # Send notification mail
-echo "" | mail -s "Snakemake finished." erikfas@kth.se
+echo "" | mail -s "$MESSAGE" erikfas@kth.se
