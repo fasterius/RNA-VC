@@ -1,5 +1,5 @@
 # Ignore everything
-*
+/*
 
 # Except .gitignore
 !.gitignore
@@ -18,5 +18,10 @@
 !example_config.yaml
 !example_cluster.yaml
 
-# Except example cluster wrapper script
-!example_submit_snakemake.sh
+# Except the wrapper script
+!submit_snakemake.sh
+
+# Add specific extensions to ignore
+*.un~
+.DS_Store
+.snakemake

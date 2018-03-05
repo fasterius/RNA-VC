@@ -6,6 +6,7 @@
 metadata: "metadata.txt"
 study_col: "GSE"
 sample_col: "SRR"
+group_col: "group"
 layout_col: "LibraryLayout"
 
 # Should variant calling be performed?
@@ -22,6 +23,7 @@ STAR_REF: "GRCh38/Sequence/STARIndex/"
 # Software and parameters
 STAR_THREADS: 8
 SRA_CACHE: "ncbi/sra/"
+JAVAMEM: "5G"
 PICARD: "bioinfo/picard"
 GATK: "bioinfo/GATK/"
 SNPEFF: "bioinfo/snpEff/"

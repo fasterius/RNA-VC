@@ -20,6 +20,31 @@ LAYOUT = config["LAYOUT"]
 STUDIES = metadata.loc[metadata[layout_col] == LAYOUT][study_col]
 SAMPLES = metadata.loc[metadata[layout_col] == LAYOUT][sample_col]
 
+# Set groups (if applicable)
+group_col = config["group_col"]
+if group_col != "" and group_col in metadata.columns:
+
+    # Initialise empty group dictionary
+    GROUPS = {}
+
+    # Get unique groups
+    unique_groups = metadata[group_col].unique().tolist()
+
+    # Add group,[samples] key,[values] pairs to group dict
+    for group in unique_groups:
+        current = metadata.loc[metadata[group_col] == group]
+        GROUPS[group] = current[sample_col].tolist()
+
+elif group_col != "" and group_col not in metadata.columns:
+
+    # Raise error for missing column
+    raise ValueError(group_col + " column missing from metadata.")
+
+else:
+
+    # Set groups variable to an empty string
+    GROUPS = ""
+
 # Function for fetching specified metadata from a sample
 def get_metadata(sample, column):
     result = metadata.loc[metadata[sample_col] == sample][column].values[0]
@@ -41,22 +66,21 @@ if config["perform_variant_calling"]:
         input:
             expand(outdir + 'expression/{sample}/{sample}.quant.sf', zip,
                 study = STUDIES, sample = SAMPLES),
-            expand(outdir + 'variants/{sample}/{sample}.vcf.gz', zip,
-                study = STUDIES, sample = SAMPLES)
-        shell:
-            "rm -r {tempdir}"
+            (expand(outdir + 'variants/{sample}.vcf.gz', zip,
+                study = STUDIES, sample = SAMPLES) if GROUPS == "" \
+            else \
+                expand(outdir + 'variants/{group}.vcf.gz', zip,
+                    study = STUDIES, group = list(GROUPS.keys())))
 else:
     rule all:
         input:
             expand(outdir + 'expression/{sample}/{sample}.quant.sf', zip,
                 study = STUDIES, sample = SAMPLES)
-        shell:
-            "rm -r {tempdir}"
 
 # Rule: clean
 rule clean:
     shell:
-        'rm -rf data {tempdir}'
+        'rm -rf data .snakemake_temp'
 
 # Rule: download raw data
 rule download:
@@ -87,10 +111,12 @@ rule alignment:
     input:
         rules.download.output.fastq
     output:
-        tempdir + 'alignment/{sample}/{sample}.bam'
+        tempdir + 'alignment/{sample}.bam'
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
+        read_group_sample = (wildcards.sample if GROUPS == "" \
+            else lambda wildcards: get_metadata(wildcards.sample, group_col))
     log:
         outdir + 'logs/{sample}.02_alignment.log'
     shell:
@@ -99,6 +125,7 @@ rule alignment:
             $(dirname {input}) \
             $(dirname {output}) \
             {wildcards.sample} \
+            {params.read_group_sample} \
             {params.layout} \
             {config[STAR_REF]} \
             {config[STAR_THREADS]} \
@@ -106,30 +133,86 @@ rule alignment:
                &> {log}
         """
 
-# Rule: variant calling
-rule variant_calling:
+# Rule: indel realignment
+rule indel_realignment:
     priority: 3
     input:
         rules.alignment.output
     output:
-        outdir + 'variants/{sample}/{sample}.vcf.gz'
-    params:
-        layout = lambda wildcards:
-            get_metadata(wildcards.sample, layout_col),
+        tempdir + 'indel_realignment/{sample}/{sample}.bam' if GROUPS == "" \
+            else tempdir + 'indel_realignment/{group}/{sample}.bam'
     log:
-        outdir + 'logs/{sample}.03_variant_calling.log'
+        outdir + 'logs/{sample}.03_indel_realignment.log'
     shell:
         """
-        bash scripts/03_variant_calling.sh \
+        bash scripts/03_indel_realignment.sh \
             $(dirname {input}) \
             $(dirname {output}) \
             {wildcards.sample} \
             {config[GEN_REF]} \
             {config[PICARD]} \
             {config[GATK]} \
-            {config[KNOWNSNPS]} \
             {config[KNOWNINDELS]} \
-            {config[SNPEFF]} \
-            {config[SNPEFFASSEMBLY]} \
+            {config[JAVAMEM]} \
                 &> {log}
         """
+
+# Rule: variant calling
+if GROUPS == "":
+
+    # Group-less variant calling
+    rule variant_calling:
+        priority: 4
+        input:
+            rules.indel_realignment.output
+        output:
+            outdir + 'variants/{sample}.vcf.gz'
+        log:
+            outdir + 'logs/{sample}.03_variant_calling.log'
+        shell:
+            """
+            bash scripts/04_variant_calling.sh \
+                $(dirname {input}) \
+                $(dirname {output}) \
+                {wildcards.sample} \
+                {config[GEN_REF]} \
+                {config[GATK]} \
+                {config[KNOWNSNPS]} \
+                {config[KNOWNINDELS]} \
+                {config[SNPEFF]} \
+                {config[SNPEFFASSEMBLY]} \
+                {config[JAVAMEM]} \
+                NO_MERGE \
+                    &> {log}
+            """
+else:
+
+    # Per-group variant calling
+    rule variant_calling:
+        priority: 4
+        input:
+            lambda wildcards: \
+                expand(tempdir + "indel_realignment/{group}/{sample}.bam",
+                       study = wildcards.study,
+                       group = wildcards.group,
+                       sample = GROUPS[wildcards.group])
+        output:
+            outdir + 'variants/{group}.vcf.gz'
+        log:
+            outdir + 'logs/{group}.03_variant_calling.log'
+        shell:
+            """
+            bash scripts/04_variant_calling.sh \
+                $(dirname {input[0]}) \
+                $(dirname {output}) \
+                {wildcards.group} \
+                {config[GEN_REF]} \
+                {config[GATK]} \
+                {config[KNOWNSNPS]} \
+                {config[KNOWNINDELS]} \
+                {config[SNPEFF]} \
+                {config[SNPEFFASSEMBLY]} \
+                {config[JAVAMEM]} \
+                MERGE \
+                    &> {log}
+            """

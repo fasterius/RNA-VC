@@ -1,17 +1,22 @@
 #!/bin/bash -l
 
+# Set bash strict mode
+set -euo pipefail
+IFS=$'\n\t'
+
 # Get input parameters
 FASTQDIR=$1
 ALIGNDIR=$2
 SAMPLE=$3
-LAYOUT=$4
-STAR_REF=$5
-THREADS=$6
-LOGFILE=$7
+RGSM=$4
+LAYOUT=$5
+STAR_REF=$6
+THREADS=$7
+LOGFILE=$8
 
 # Create directory for second pass alignment
-TEMP=$ALIGNDIR/temp
-mkdir -p $TEMP
+WORKDIR=$ALIGNDIR/$SAMPLE
+mkdir -p $WORKDIR
 
 # Get read layout and FASTQ input files
 if [ "$LAYOUT" == "PAIRED" ]; then
@@ -30,20 +35,18 @@ star --genomeDir $STAR_REF \
     --readFilesIn $FASTQ1 $FASTQ2 \
     --readFilesCommand zcat \
     --runThreadN $THREADS \
-    --outSAMattrRGline ID:$SAMPLE LB:$SAMPLE PL:Illumina SM:$SAMPLE \
+    --outSAMattrRGline ID:$SAMPLE LB:$SAMPLE PL:Illumina SM:$RGSM \
     --outSAMtype BAM SortedByCoordinate \
     --twopassMode Basic \
-    --outFileNamePrefix $TEMP/
+    --outFileNamePrefix $WORKDIR/
 
 # Move alignment file
-mv $TEMP/Aligned.sortedByCoord.out.bam $ALIGNDIR/${SAMPLE}.bam
+mv $WORKDIR/Aligned.sortedByCoord.out.bam $ALIGNDIR/${SAMPLE}.bam
 
 # Append logs
-cat $TEMP/Log.out >> $LOGFILE
-cat $TEMP/Log.final.out >> $LOGFILE
+cat $WORKDIR/Log.out >> $LOGFILE
+cat $WORKDIR/Log.final.out >> $LOGFILE
 
-# Remove temporary files
-rm -r $TEMP
-
-# Remove FASTQ-files
+# Remove workdirorary files
+rm -r $WORKDIR
 rm -r $FASTQDIR
