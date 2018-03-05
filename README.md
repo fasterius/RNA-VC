@@ -47,14 +47,17 @@ git clone https://github.com/fasterius/RNA-VC
 You also need to provide RNA-VC with the metadata describing the GEO samples
 you want to analyse. This means that you need to provide, at the very least,
 *SRR IDs*, their corresponding *GSE IDs*, and their *read layouts* (listing
-them either as "SINGLE" or "PAIRED", respectively). Such a metadata file might
-look like this:
+them either as "SINGLE" or "PAIRED", respectively). You may optionally add a
+column for sample groups, which will be merged at the variant calling stage.
+This is useful for when you have sample replicates that you want to treat as a
+group, which is common for variant calling procedures. Such a metadata file
+might look something like this:
 
-| Study     | Sample     | Layout     |
-| --------- | ---------- | ---------- |
-| GSE81194  | SRR3479755 | PAIRED     |
-| GSE81194  | SRR3479758 | PAIRED     |
-| GSE81194  | SRR3479759 | PAIRED     |
+| GSE       | SRR        | Layout     | Group      |
+| --------- | ---------- | ---------- |----------- |
+| GSE81194  | SRR3479755 | PAIRED     | Sample_1   |
+| GSE81194  | SRR3479758 | PAIRED     | Sample_2   |
+| GSE81194  | SRR3479759 | PAIRED     | Sample_2   |
 
 The `config.yaml` file provided can then be edited according to the structure
 of your metadata file, in addition to the locations of the references, indexes
