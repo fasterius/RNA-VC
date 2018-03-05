@@ -66,7 +66,7 @@ if config["perform_variant_calling"]:
         input:
             expand(outdir + 'expression/{sample}/{sample}.quant.sf', zip,
                 study = STUDIES, sample = SAMPLES),
-            (expand(outdir + 'variants/{sample}/{sample}.vcf.gz', zip,
+            (expand(outdir + 'variants/{sample}.vcf.gz', zip,
                 study = STUDIES, sample = SAMPLES) if GROUPS == "" \
             else \
                 expand(outdir + 'variants/{group}.vcf.gz', zip,
@@ -80,7 +80,7 @@ else:
 # Rule: clean
 rule clean:
     shell:
-        'rm -rf data {tempdir}'
+        'rm -rf data .snakemake_temp'
 
 # Rule: download raw data
 rule download:
@@ -115,6 +115,8 @@ rule alignment:
     params:
         layout = lambda wildcards:
             get_metadata(wildcards.sample, layout_col),
+        read_group_sample = (wildcards.sample if GROUPS == "" \
+            else lambda wildcards: get_metadata(wildcards.sample, group_col))
     log:
         outdir + 'logs/{sample}.02_alignment.log'
     shell:
@@ -123,6 +125,7 @@ rule alignment:
             $(dirname {input}) \
             $(dirname {output}) \
             {wildcards.sample} \
+            {params.read_group_sample} \
             {params.layout} \
             {config[STAR_REF]} \
             {config[STAR_THREADS]} \
@@ -163,7 +166,7 @@ if GROUPS == "":
         input:
             rules.indel_realignment.output
         output:
-            outdir + 'variants/{sample}/{sample}.vcf.gz'
+            outdir + 'variants/{sample}.vcf.gz'
         log:
             outdir + 'logs/{sample}.03_variant_calling.log'
         shell:
