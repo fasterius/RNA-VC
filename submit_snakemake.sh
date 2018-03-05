@@ -18,9 +18,8 @@ for CURRENT_LAYOUT in SINGLE; do
     snakemake \
         --snakefile Snakefile \
         --config LAYOUT=$CURRENT_LAYOUT \
-        --config group_col="group" \
         --keep-going \
-        --jobs 100 \
+        --jobs 20 \
         --cluster-config cluster.yaml \
         --cluster "sbatch \
                       --account {cluster.account} \
