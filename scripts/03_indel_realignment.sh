@@ -15,11 +15,11 @@ KNOWNINDELS=$7
 JAVAMEM="-Xmx$8"
 
 # Create subdirectories
-WORKDIR=$REALIGNDIR/workdir
-mkdir -p $REALIGNDIR
+WORKDIR=$REALIGNDIR/$SAMPLE/workdir
+mkdir -p $WORKDIR
 
 # Mark duplicates
-java $JAVAMEM -jar $PICARD/picard.jar MarkDuplicates \
+java "$JAVAMEM" -jar $PICARD/picard.jar MarkDuplicates \
     INPUT=$ALIGNDIR/${SAMPLE}.bam \
     OUTPUT=$WORKDIR/${SAMPLE}.dedupped.bam  \
     CREATE_INDEX=true \
@@ -33,7 +33,7 @@ rm $ALIGNDIR/${SAMPLE}.bam
 samtools index $WORKDIR/${SAMPLE}.dedupped.bam
 
 # Split'N'Trim and reassign mapping qualities
-java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
+java "$JAVAMEM" -jar $GATK/GenomeAnalysisTK.jar \
     -T SplitNCigarReads \
     -R $REF \
     -I $WORKDIR/${SAMPLE}.dedupped.bam \
@@ -47,14 +47,14 @@ java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
 rm $WORKDIR/${SAMPLE}.dedupped.bam*
 
 # Indel realignment
-java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
+java "$JAVAMEM" -jar $GATK/GenomeAnalysisTK.jar \
     -T RealignerTargetCreator \
     -R $REF \
     -I $WORKDIR/${SAMPLE}.dedupped.split.bam \
     -known $KNOWNINDELS \
     -o $WORKDIR/realignment_targets.list
 
-java $JAVAMEM -jar $GATK/GenomeAnalysisTK.jar \
+java "$JAVAMEM" -jar $GATK/GenomeAnalysisTK.jar \
     -T IndelRealigner \
     -R $REF \
     -I $WORKDIR/${SAMPLE}.dedupped.split.bam \
