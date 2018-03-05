@@ -9,6 +9,7 @@ __default__:
     ntasks: 1
     time: '10:00:00'
     log: '{rule}.{log}'
+    mail_user: '<e-mail>'
     mail_type: 'FAIL'
     job_name: '{rule}.{wildcards.sample}'
 alignment:
